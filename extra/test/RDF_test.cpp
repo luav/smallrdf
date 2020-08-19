@@ -4,7 +4,8 @@
 
 #include <gtest/gtest.h>
 
-#include "RDF.h"
+#include "RDF.hpp"
+
 
 TEST(RDFString, length) {
   ASSERT_EQ(0, RDFString().length());
@@ -17,8 +18,12 @@ TEST(RDFString, buffer) {
 
   ASSERT_EQ(0, RDFString().buffer());
   ASSERT_EQ((const uint8_t*)test, RDFString(test).buffer());
-  ASSERT_EQ((const uint8_t*)test,
-            RDFString((const uint8_t*)test, 4).buffer());
+  ASSERT_EQ(true,
+            RDFString((const uint8_t*)test, 4).equals(RDFString(test)));
+//  // Note: the test below is ill-formed because it compares pointers, which are different
+//  // because the RDFString had to relocate a buffer lacking the null terminator in the end (4th character)
+//  ASSERT_EQ((const uint8_t*)test,
+//            RDFString((const uint8_t*)test, 4).buffer());
 }
 
 TEST(RDFString, equals) {

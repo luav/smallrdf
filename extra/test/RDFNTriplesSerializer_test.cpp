@@ -6,6 +6,7 @@
 
 #include "RDFNTriplesSerializer.h"
 
+
 TEST(NTriplesSerializer, NamedNode) {
   RDFDataset dataset;
   RDFString subjectStr("http://example.org/subject");

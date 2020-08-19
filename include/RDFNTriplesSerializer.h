@@ -5,7 +5,8 @@
 #ifndef RDFNTRIPLESSERIALIZER_H_
 #define RDFNTRIPLESSERIALIZER_H_
 
-#include "RDF.h"
+#include "RDF.hpp"
+
 
 class NTriplesSerializer {
  public:

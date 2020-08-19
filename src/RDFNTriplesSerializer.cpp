@@ -2,9 +2,10 @@
 
  */
 
+#include <string.h>
+
 #include "RDFNTriplesSerializer.h"
 
-#include <string.h>
 
 NTriplesSerializer::NTriplesSerializer()
     : _length(0),
@@ -35,24 +36,22 @@ void NTriplesSerializer::write(const char chr) {
 }
 
 void NTriplesSerializer::write(const RDFString* str) {
-  memcpy(_cur, str->buffer(), str->length());
+  memcpy(_cur, str->c_str(), str->length());
   _cur += str->length();
 }
 
 size_t NTriplesSerializer::datasetSize(const RDFDataset* dataset) {
-  size_t size = 1;
+  size_t size = 1; // Reserve for the terminating NULL
 
-  for (int i = 0; i < dataset->quads.length; i++) {
+  for (int i = 0; i < dataset->quads.length(); i++)
     size += quadSize(dataset->quads.get(i));
-  }
 
   return size;
 }
 
 void NTriplesSerializer::serializeDataset(const RDFDataset* dataset) {
-  for (int i = 0; i < dataset->quads.length; i++) {
+  for (int i = 0; i < dataset->quads.length(); i++)
     serializeQuad(dataset->quads.get(i));
-  }
 
   write(static_cast<char>(0));
 }
@@ -80,9 +79,8 @@ void NTriplesSerializer::serializeQuad(const RDFQuad* quad) {
 }
 
 size_t NTriplesSerializer::termSize(const RDFTerm* term) {
-  if (term == 0) {
+  if (term == 0)
     return 0;
-  }
 
   switch (term->termType) {
     case RDF_NAMED_NODE:

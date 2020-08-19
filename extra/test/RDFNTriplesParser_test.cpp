@@ -2,9 +2,10 @@
 
  */
 
+#include <gtest/gtest.h>
+
 #include "RDFNTriplesParser.h"
 
-#include <gtest/gtest.h>
 
 TEST(NTriplesParser, NamedNode) {
   RDFString input(

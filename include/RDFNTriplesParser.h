@@ -5,7 +5,8 @@
 #ifndef RDFNTRIPLESPARSER_H_
 #define RDFNTRIPLESPARSER_H_
 
-#include "RDF.h"
+#include "RDF.hpp"
+
 
 class NTriplesParser {
  public:

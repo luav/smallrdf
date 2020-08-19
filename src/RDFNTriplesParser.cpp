@@ -6,18 +6,16 @@
 
 NTriplesParser::NTriplesParser(const RDFString* input, RDFDocument* document)
     : document(document),
-      _buf(input->buffer()),
-      _cur(input->buffer()),
-      _end(input->buffer() + input->length()) {
-  if (document == 0) {
+      _buf(input->data()),
+      _cur(input->data()),
+      _end(input->data() + input->length()) {
+  if (document == 0)
     this->document = new RDFDocument();
-  }
 }
 
 RDFDocument* NTriplesParser::parse() {
-  while (hasNext()) {
+  while (hasNext())
     parseQuad();
-  }
 
   return document;
 }
@@ -44,15 +42,12 @@ const RDFQuad* NTriplesParser::parseQuad() {
 
   readWhiteSpace();
 
-  if (getNext(true) == '.') {
+  if (getNext(true) == '.')
     getNext();
-  }
 
-  if (subject && predicate && object) {
+  if (subject && predicate && object)
     return document->triple(subject, predicate, object);
-  } else {
-    return 0;
-  }
+  return NULL;
 }
 
 const RDFQuad* NTriplesParser::parseQuad_static(const RDFString* input,
@@ -67,11 +62,9 @@ const bool NTriplesParser::hasNext() {
 }
 
 const uint8_t NTriplesParser::getNext(const bool keep) {
-  if (keep) {
+  if (keep)
     return *_cur;
-  } else {
-    return *_cur++;
-  }
+  return *_cur++;
 }
 
 const bool NTriplesParser::readWhiteSpace() {
@@ -91,21 +84,17 @@ const bool NTriplesParser::readWhiteSpace() {
 }
 
 const RDFTerm* NTriplesParser::readSubject() {
-  if (isIRIRef()) {
+  if (isIRIRef())
     return document->namedNode(readIRIRef());
-  } else if (isBlankNodeLabel()) {
+  else if (isBlankNodeLabel())
     return document->blankNode(readBlankNodeLabel());
-  } else {
-    return 0;
-  }
+  return NULL;
 }
 
 const RDFTerm* NTriplesParser::readPredicate() {
-  if (isIRIRef()) {
+  if (isIRIRef())
     return document->namedNode(readIRIRef());
-  } else {
-    return 0;
-  }
+  return NULL;
 }
 
 const RDFTerm* NTriplesParser::readObject() {
@@ -113,11 +102,9 @@ const RDFTerm* NTriplesParser::readObject() {
     return document->namedNode(readIRIRef());
   } else if (isLiteral()) {
     return readLiteral();
-  } else if (isBlankNodeLabel()) {
+  } else if (isBlankNodeLabel())
     return document->blankNode(readBlankNodeLabel());
-  } else {
-    return 0;
-  }
+  return NULL;
 }
 
 const bool NTriplesParser::isLiteral() {
@@ -140,9 +127,8 @@ const RDFLiteral* NTriplesParser::readLiteral() {
 }
 
 const RDFString* NTriplesParser::readLangtag() {
-  if (getNext(true) != '@') {
-    return 0;
-  }
+  if (getNext(true) != '@')
+    return NULL;
 
   const uint8_t* buf = ++_cur;
   size_t length = 0;
@@ -160,16 +146,14 @@ const bool NTriplesParser::isIRIRef() {
 }
 
 const RDFString* NTriplesParser::readIRIRef() {
-  if (!isIRIRef()) {
-    return 0;
-  }
+  if (!isIRIRef())
+    return NULL;
 
   const uint8_t* buf = ++_cur;
   size_t length = 0;
 
-  while (hasNext() && getNext() != '>') {
+  while (hasNext() && getNext() != '>')
     length++;
-  }
 
   return document->string(buf, length);
 }
@@ -182,9 +166,8 @@ const RDFString* NTriplesParser::readStringLiteralQuote() {
   const uint8_t* buf = ++_cur;
   size_t length = 0;
 
-  while (hasNext() && getNext() != '"') {
+  while (hasNext() && getNext() != '"')
     length++;
-  }
 
   return document->string(buf, length);
 }
