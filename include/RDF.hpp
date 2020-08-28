@@ -1,9 +1,9 @@
-//! C++ interface of the Small RDF library
+//! C++ interface of the Small  library
 //! \author Copyright 2016 Thomas Bergwinkl. All Rights Reserved.
 //!         (c) 2020 Artem Lutov
 
-#ifndef RDF_HPP_
-#define RDF_HPP_
+#ifndef _HPP_
+#define _HPP_
 
 #include  <stdexcept>
 #if defined(ARDUINO)
@@ -12,33 +12,34 @@
 
 #include "RDF.h"
 
+namespace smallrdf {
+
 using std::logic_error;  // Not Implemented exception
 
-
 // Implementation of C++ interface =============================================
-class RDFString {
+class String {
  public:
-  RDFString();
-  explicit RDFString(const char* cstr); //!< Acquire the string poiner
+  String();
+  explicit String(const char* cstr); //!< Acquire the string poiner
 
-  //! \brief Create RDFString from the provided buffer
+  //! \brief Create String from the provided buffer
   //! The string is allocated if the buffer if is not null-terminated, otherwise the buffer pointer is acquired
   //!
   //! \param buf const uint8_t*  - buffer, which may not have the null-terminator
   //! \param length const size_t  - size of the buffer
-  RDFString(const uint8_t* buf, const size_t length);
+  String(const uint8_t* buf, const size_t length);
 #ifdef ARDUINO
-  explicit RDFString(String str, bool copy = false);
+  explicit String(String str, bool copy = false);
 #endif // ARDUINO
-  virtual ~RDFString();
+  virtual ~String();
 
   const char* c_str() const  { return _data; };
   const uint8_t* data() const  { return reinterpret_cast<const uint8_t*>(_data); };
   //! \deprecated Replaced with standard-compliant data(). Remained only for the compatibility with the original API until the refactoring completion
   const uint8_t* buffer() const  { return reinterpret_cast<const uint8_t*>(_data); };
   const size_t length() const  { return _size ? _size-1 : 0; }  //!< String length without the null-terminator
-  bool equals(const RDFString& other) const;
-  bool equals(const RDFString* other) const;
+  bool equals(const String& other) const;
+  bool equals(const String* other) const;
 
  private:
   const char* _data;  //!< String content
@@ -46,91 +47,93 @@ class RDFString {
   bool _allocated;  //!< The string data were allocated rather than acquierd
 };
 
-class RDFTerm {
+class Term {
  public:
-  const RDFTermType termType;
-  const RDFString* value;
+  const TermType termType;
+  const String* value;
 
-  RDFTerm(const RDFTermType termType, const RDFString* value);
-  virtual ~RDFTerm() {}
+  Term(const TermType termType, const String* value);
+  virtual ~Term() {}
 
-  virtual bool equals(const RDFTerm* other) const;
+  virtual bool equals(const Term* other) const;
 };
 
-class RDFNamedNode : public RDFTerm {
+class NamedNode : public Term {
  public:
-  explicit RDFNamedNode(const RDFString* value);
+  explicit NamedNode(const String* value);
 };
 
-class RDFLiteral : public RDFTerm {
+class Literal : public Term {
  public:
-  const RDFString* language;
-  const RDFString* datatype;
+  const String* language;
+  const String* datatype;
 
-  RDFLiteral(const RDFString* value, const RDFString* language = nullptr,
-             const RDFString* datatype = nullptr);
+  Literal(const String* value, const String* language = nullptr,
+             const String* datatype = nullptr);
 
-  virtual bool equals(const RDFTerm* other) const;
+  virtual bool equals(const Term* other) const;
 };
 
-class RDFBlankNode : public RDFTerm {
+class BlankNode : public Term {
  public:
-  explicit RDFBlankNode(const RDFString* value);
+  explicit BlankNode(const String* value);
 };
 
-class RDFQuad {
+class Quad {
  public:
-  const RDFTerm* subject;
-  const RDFTerm* predicate;
-  const RDFTerm* object;
-  const RDFTerm* graph;
+  const Term* subject;
+  const Term* predicate;
+  const Term* object;
+  const Term* graph;
 
-  RDFQuad(const RDFTerm* subject, const RDFTerm* predicate,
-          const RDFTerm* object, const RDFTerm* graph = nullptr);
+  Quad(const Term* subject, const Term* predicate,
+          const Term* object, const Term* graph = nullptr);
 
-  const bool match(const RDFTerm* subject, const RDFTerm* predicate = nullptr,
-                   const RDFTerm* object = nullptr, const RDFTerm* graph = nullptr) const;
+  const bool match(const Term* subject, const Term* predicate = nullptr,
+                   const Term* object = nullptr, const Term* graph = nullptr) const;
 };
 
-class RDFDataset {
+class Dataset {
  public:
-  RDFList<const RDFQuad*> quads;
+  List<const Quad*> quads;
 
-  virtual ~RDFDataset();
+  virtual ~Dataset();
 
-  const RDFQuad* find(const RDFTerm* subject, const RDFTerm* predicate = nullptr,
-                const RDFTerm* object = nullptr, const RDFTerm* graph = nullptr);
-  RDFDataset* match(const RDFTerm* subject, const RDFTerm* predicate = nullptr,
-                    const RDFTerm* object = nullptr, const RDFTerm* graph = nullptr);
+  const Quad* find(const Term* subject, const Term* predicate = nullptr,
+                const Term* object = nullptr, const Term* graph = nullptr);
+  Dataset* match(const Term* subject, const Term* predicate = nullptr,
+                    const Term* object = nullptr, const Term* graph = nullptr);
 
  protected:
-  RDFList<RDFDataset*> _datasets;
+  List<Dataset*> _datasets;
 };
 
-class RDFDocument : public RDFDataset {
+class Document : public Dataset {
  public:
-  virtual ~RDFDocument();
+  virtual ~Document();
 
-  const RDFString* string(const char* buf);
-  const RDFString* string(const uint8_t* buf, const size_t length);
-  const RDFNamedNode* namedNode(const RDFString* value);
-  const RDFLiteral* literal(const RDFString* value, const RDFString* language = nullptr,
-                            const RDFString* datatype = nullptr);
-  const RDFBlankNode* blankNode(const RDFString* value);
-  const RDFQuad* triple(const RDFTerm* subject, const RDFTerm* predicate,
-                      const RDFTerm* object, const RDFTerm* graph = nullptr);
-  RDFDataset* dataset();
+  const String* string(const char* buf);
+  const String* string(const uint8_t* buf, const size_t length);
+  const NamedNode* namedNode(const String* value);
+  const Literal* literal(const String* value, const String* language = nullptr,
+                            const String* datatype = nullptr);
+  const BlankNode* blankNode(const String* value);
+  const Quad* triple(const Term* subject, const Term* predicate,
+                      const Term* object, const Term* graph = nullptr);
+  Dataset* dataset();
 
 #if defined(ARDUINO)
-  const RDFString* string(String str, bool copy = false);
+  const String* string(String str, bool copy = false);
 #endif
 
  protected:
-  RDFList<RDFString*> _strings;
-  RDFList<RDFTerm*> _terms;
+  List<String*> _strings;
+  List<Term*> _terms;
 
-  const RDFString* findString(const RDFString* newStr) const;
-  const RDFTerm* findTerm(const RDFTerm* newTerm) const;
+  const String* findString(const String* newStr) const;
+  const Term* findTerm(const Term* newTerm) const;
 };
 
-#endif  // RDF_HPP_
+}  // smallrdf
+
+#endif  // _HPP_

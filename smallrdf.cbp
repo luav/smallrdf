@@ -144,18 +144,9 @@
 			<Add option="-Wl,-z,relro" />
 		</Compiler>
 		<Unit filename="contrib/uthash.h" />
-		<Unit filename="extra/test/RDFNTriplesParser_test.cpp">
-			<Option target="Test Debug" />
-		</Unit>
-		<Unit filename="extra/test/RDFNTriplesSerializer_test.cpp">
-			<Option target="Test Debug" />
-		</Unit>
-		<Unit filename="extra/test/RDF_test.cpp">
-			<Option target="Test Debug" />
-		</Unit>
-		<Unit filename="extra/test/test.cpp">
-			<Option target="Test Debug" />
-		</Unit>
+		<Unit filename="include/Container.hpp" />
+		<Unit filename="include/NTriplesParser.h" />
+		<Unit filename="include/NTriplesSerializer.h" />
 		<Unit filename="include/RDF.h" />
 		<Unit filename="include/RDF.hpp">
 			<Option target="Debug" />
@@ -163,12 +154,21 @@
 			<Option target="Test Debug" />
 			<Option target="Release Native" />
 		</Unit>
-		<Unit filename="include/RDFContainer.hpp" />
-		<Unit filename="include/RDFNTriplesParser.h" />
-		<Unit filename="include/RDFNTriplesSerializer.h" />
+		<Unit filename="src/NTriplesParser.cpp" />
+		<Unit filename="src/NTriplesSerializer.cpp" />
 		<Unit filename="src/RDF.cpp" />
-		<Unit filename="src/RDFNTriplesParser.cpp" />
-		<Unit filename="src/RDFNTriplesSerializer.cpp" />
+		<Unit filename="test/NTriplesParser_test.cpp">
+			<Option target="Test Debug" />
+		</Unit>
+		<Unit filename="test/NTriplesSerializer_test.cpp">
+			<Option target="Test Debug" />
+		</Unit>
+		<Unit filename="test/RDF_test.cpp">
+			<Option target="Test Debug" />
+		</Unit>
+		<Unit filename="test/test.cpp">
+			<Option target="Test Debug" />
+		</Unit>
 		<Extensions>
 			<DoxyBlocks>
 				<comment_style block="1" line="1" />

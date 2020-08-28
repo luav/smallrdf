@@ -73,15 +73,15 @@ OBJDIR_TEST_DEBUG = obj/Debug
 DEP_TEST_DEBUG = 
 OUT_TEST_DEBUG = bin/Debug/test
 
-OBJ_DEBUG = $(OBJDIR_DEBUG)/src/RDF.o $(OBJDIR_DEBUG)/src/RDFNTriplesParser.o $(OBJDIR_DEBUG)/src/RDFNTriplesSerializer.o
+OBJ_DEBUG = $(OBJDIR_DEBUG)/src/NTriplesParser.o $(OBJDIR_DEBUG)/src/NTriplesSerializer.o $(OBJDIR_DEBUG)/src/RDF.o
 
-OBJ_RELEASE = $(OBJDIR_RELEASE)/src/RDF.o $(OBJDIR_RELEASE)/src/RDFNTriplesParser.o $(OBJDIR_RELEASE)/src/RDFNTriplesSerializer.o
+OBJ_RELEASE = $(OBJDIR_RELEASE)/src/NTriplesParser.o $(OBJDIR_RELEASE)/src/NTriplesSerializer.o $(OBJDIR_RELEASE)/src/RDF.o
 
-OBJ_RELEASE_NATIVE = $(OBJDIR_RELEASE_NATIVE)/src/RDF.o $(OBJDIR_RELEASE_NATIVE)/src/RDFNTriplesParser.o $(OBJDIR_RELEASE_NATIVE)/src/RDFNTriplesSerializer.o
+OBJ_RELEASE_NATIVE = $(OBJDIR_RELEASE_NATIVE)/src/NTriplesParser.o $(OBJDIR_RELEASE_NATIVE)/src/NTriplesSerializer.o $(OBJDIR_RELEASE_NATIVE)/src/RDF.o
 
-OBJ_RELEASE_NATIVE_C = $(OBJDIR_RELEASE_NATIVE_C)/src/RDF.o $(OBJDIR_RELEASE_NATIVE_C)/src/RDFNTriplesParser.o $(OBJDIR_RELEASE_NATIVE_C)/src/RDFNTriplesSerializer.o
+OBJ_RELEASE_NATIVE_C = $(OBJDIR_RELEASE_NATIVE_C)/src/NTriplesParser.o $(OBJDIR_RELEASE_NATIVE_C)/src/NTriplesSerializer.o $(OBJDIR_RELEASE_NATIVE_C)/src/RDF.o
 
-OBJ_TEST_DEBUG = $(OBJDIR_TEST_DEBUG)/extra/test/RDFNTriplesParser_test.o $(OBJDIR_TEST_DEBUG)/extra/test/RDFNTriplesSerializer_test.o $(OBJDIR_TEST_DEBUG)/extra/test/RDF_test.o $(OBJDIR_TEST_DEBUG)/extra/test/test.o $(OBJDIR_TEST_DEBUG)/src/RDF.o $(OBJDIR_TEST_DEBUG)/src/RDFNTriplesParser.o $(OBJDIR_TEST_DEBUG)/src/RDFNTriplesSerializer.o
+OBJ_TEST_DEBUG = $(OBJDIR_TEST_DEBUG)/src/NTriplesParser.o $(OBJDIR_TEST_DEBUG)/src/NTriplesSerializer.o $(OBJDIR_TEST_DEBUG)/src/RDF.o $(OBJDIR_TEST_DEBUG)/test/NTriplesParser_test.o $(OBJDIR_TEST_DEBUG)/test/NTriplesSerializer_test.o $(OBJDIR_TEST_DEBUG)/test/RDF_test.o $(OBJDIR_TEST_DEBUG)/test/test.o
 
 all: debug release release_native release_native_c test_debug
 
@@ -98,14 +98,14 @@ debug: before_debug out_debug after_debug
 out_debug: before_debug $(OBJ_DEBUG) $(DEP_DEBUG)
 	$(LD) -shared $(LIBDIR_DEBUG) $(OBJ_DEBUG)  -o $(OUT_DEBUG) $(LDFLAGS_DEBUG) $(LIB_DEBUG)
 
+$(OBJDIR_DEBUG)/src/NTriplesParser.o: src/NTriplesParser.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c src/NTriplesParser.cpp -o $(OBJDIR_DEBUG)/src/NTriplesParser.o
+
+$(OBJDIR_DEBUG)/src/NTriplesSerializer.o: src/NTriplesSerializer.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c src/NTriplesSerializer.cpp -o $(OBJDIR_DEBUG)/src/NTriplesSerializer.o
+
 $(OBJDIR_DEBUG)/src/RDF.o: src/RDF.cpp
 	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c src/RDF.cpp -o $(OBJDIR_DEBUG)/src/RDF.o
-
-$(OBJDIR_DEBUG)/src/RDFNTriplesParser.o: src/RDFNTriplesParser.cpp
-	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c src/RDFNTriplesParser.cpp -o $(OBJDIR_DEBUG)/src/RDFNTriplesParser.o
-
-$(OBJDIR_DEBUG)/src/RDFNTriplesSerializer.o: src/RDFNTriplesSerializer.cpp
-	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c src/RDFNTriplesSerializer.cpp -o $(OBJDIR_DEBUG)/src/RDFNTriplesSerializer.o
 
 clean_debug: 
 	rm -f $(OBJ_DEBUG) $(OUT_DEBUG)
@@ -123,14 +123,14 @@ release: before_release out_release after_release
 out_release: before_release $(OBJ_RELEASE) $(DEP_RELEASE)
 	$(LD) -shared $(LIBDIR_RELEASE) $(OBJ_RELEASE)  -o $(OUT_RELEASE) $(LDFLAGS_RELEASE) $(LIB_RELEASE)
 
+$(OBJDIR_RELEASE)/src/NTriplesParser.o: src/NTriplesParser.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c src/NTriplesParser.cpp -o $(OBJDIR_RELEASE)/src/NTriplesParser.o
+
+$(OBJDIR_RELEASE)/src/NTriplesSerializer.o: src/NTriplesSerializer.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c src/NTriplesSerializer.cpp -o $(OBJDIR_RELEASE)/src/NTriplesSerializer.o
+
 $(OBJDIR_RELEASE)/src/RDF.o: src/RDF.cpp
 	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c src/RDF.cpp -o $(OBJDIR_RELEASE)/src/RDF.o
-
-$(OBJDIR_RELEASE)/src/RDFNTriplesParser.o: src/RDFNTriplesParser.cpp
-	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c src/RDFNTriplesParser.cpp -o $(OBJDIR_RELEASE)/src/RDFNTriplesParser.o
-
-$(OBJDIR_RELEASE)/src/RDFNTriplesSerializer.o: src/RDFNTriplesSerializer.cpp
-	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c src/RDFNTriplesSerializer.cpp -o $(OBJDIR_RELEASE)/src/RDFNTriplesSerializer.o
 
 clean_release: 
 	rm -f $(OBJ_RELEASE) $(OUT_RELEASE)
@@ -148,14 +148,14 @@ release_native: before_release_native out_release_native after_release_native
 out_release_native: before_release_native $(OBJ_RELEASE_NATIVE) $(DEP_RELEASE_NATIVE)
 	$(LD) -shared $(LIBDIR_RELEASE_NATIVE) $(OBJ_RELEASE_NATIVE)  -o $(OUT_RELEASE_NATIVE) $(LDFLAGS_RELEASE_NATIVE) $(LIB_RELEASE_NATIVE)
 
+$(OBJDIR_RELEASE_NATIVE)/src/NTriplesParser.o: src/NTriplesParser.cpp
+	$(CXX) $(CFLAGS_RELEASE_NATIVE) $(INC_RELEASE_NATIVE) -c src/NTriplesParser.cpp -o $(OBJDIR_RELEASE_NATIVE)/src/NTriplesParser.o
+
+$(OBJDIR_RELEASE_NATIVE)/src/NTriplesSerializer.o: src/NTriplesSerializer.cpp
+	$(CXX) $(CFLAGS_RELEASE_NATIVE) $(INC_RELEASE_NATIVE) -c src/NTriplesSerializer.cpp -o $(OBJDIR_RELEASE_NATIVE)/src/NTriplesSerializer.o
+
 $(OBJDIR_RELEASE_NATIVE)/src/RDF.o: src/RDF.cpp
 	$(CXX) $(CFLAGS_RELEASE_NATIVE) $(INC_RELEASE_NATIVE) -c src/RDF.cpp -o $(OBJDIR_RELEASE_NATIVE)/src/RDF.o
-
-$(OBJDIR_RELEASE_NATIVE)/src/RDFNTriplesParser.o: src/RDFNTriplesParser.cpp
-	$(CXX) $(CFLAGS_RELEASE_NATIVE) $(INC_RELEASE_NATIVE) -c src/RDFNTriplesParser.cpp -o $(OBJDIR_RELEASE_NATIVE)/src/RDFNTriplesParser.o
-
-$(OBJDIR_RELEASE_NATIVE)/src/RDFNTriplesSerializer.o: src/RDFNTriplesSerializer.cpp
-	$(CXX) $(CFLAGS_RELEASE_NATIVE) $(INC_RELEASE_NATIVE) -c src/RDFNTriplesSerializer.cpp -o $(OBJDIR_RELEASE_NATIVE)/src/RDFNTriplesSerializer.o
 
 clean_release_native: 
 	rm -f $(OBJ_RELEASE_NATIVE) $(OUT_RELEASE_NATIVE)
@@ -173,14 +173,14 @@ release_native_c: before_release_native_c out_release_native_c after_release_nat
 out_release_native_c: before_release_native_c $(OBJ_RELEASE_NATIVE_C) $(DEP_RELEASE_NATIVE_C)
 	$(LD) -shared $(LIBDIR_RELEASE_NATIVE_C) $(OBJ_RELEASE_NATIVE_C)  -o $(OUT_RELEASE_NATIVE_C) $(LDFLAGS_RELEASE_NATIVE_C) $(LIB_RELEASE_NATIVE_C)
 
+$(OBJDIR_RELEASE_NATIVE_C)/src/NTriplesParser.o: src/NTriplesParser.cpp
+	$(CXX) $(CFLAGS_RELEASE_NATIVE_C) $(INC_RELEASE_NATIVE_C) -c src/NTriplesParser.cpp -o $(OBJDIR_RELEASE_NATIVE_C)/src/NTriplesParser.o
+
+$(OBJDIR_RELEASE_NATIVE_C)/src/NTriplesSerializer.o: src/NTriplesSerializer.cpp
+	$(CXX) $(CFLAGS_RELEASE_NATIVE_C) $(INC_RELEASE_NATIVE_C) -c src/NTriplesSerializer.cpp -o $(OBJDIR_RELEASE_NATIVE_C)/src/NTriplesSerializer.o
+
 $(OBJDIR_RELEASE_NATIVE_C)/src/RDF.o: src/RDF.cpp
 	$(CXX) $(CFLAGS_RELEASE_NATIVE_C) $(INC_RELEASE_NATIVE_C) -c src/RDF.cpp -o $(OBJDIR_RELEASE_NATIVE_C)/src/RDF.o
-
-$(OBJDIR_RELEASE_NATIVE_C)/src/RDFNTriplesParser.o: src/RDFNTriplesParser.cpp
-	$(CXX) $(CFLAGS_RELEASE_NATIVE_C) $(INC_RELEASE_NATIVE_C) -c src/RDFNTriplesParser.cpp -o $(OBJDIR_RELEASE_NATIVE_C)/src/RDFNTriplesParser.o
-
-$(OBJDIR_RELEASE_NATIVE_C)/src/RDFNTriplesSerializer.o: src/RDFNTriplesSerializer.cpp
-	$(CXX) $(CFLAGS_RELEASE_NATIVE_C) $(INC_RELEASE_NATIVE_C) -c src/RDFNTriplesSerializer.cpp -o $(OBJDIR_RELEASE_NATIVE_C)/src/RDFNTriplesSerializer.o
 
 clean_release_native_c: 
 	rm -f $(OBJ_RELEASE_NATIVE_C) $(OUT_RELEASE_NATIVE_C)
@@ -189,8 +189,8 @@ clean_release_native_c:
 
 before_test_debug: 
 	test -d bin/Debug || mkdir -p bin/Debug
-	test -d $(OBJDIR_TEST_DEBUG)/extra/test || mkdir -p $(OBJDIR_TEST_DEBUG)/extra/test
 	test -d $(OBJDIR_TEST_DEBUG)/src || mkdir -p $(OBJDIR_TEST_DEBUG)/src
+	test -d $(OBJDIR_TEST_DEBUG)/test || mkdir -p $(OBJDIR_TEST_DEBUG)/test
 
 after_test_debug: 
 
@@ -199,32 +199,32 @@ test_debug: before_test_debug out_test_debug after_test_debug
 out_test_debug: before_test_debug $(OBJ_TEST_DEBUG) $(DEP_TEST_DEBUG)
 	$(LD) $(LIBDIR_TEST_DEBUG) -o $(OUT_TEST_DEBUG) $(OBJ_TEST_DEBUG)  $(LDFLAGS_TEST_DEBUG) $(LIB_TEST_DEBUG)
 
-$(OBJDIR_TEST_DEBUG)/extra/test/RDFNTriplesParser_test.o: extra/test/RDFNTriplesParser_test.cpp
-	$(CXX) $(CFLAGS_TEST_DEBUG) $(INC_TEST_DEBUG) -c extra/test/RDFNTriplesParser_test.cpp -o $(OBJDIR_TEST_DEBUG)/extra/test/RDFNTriplesParser_test.o
+$(OBJDIR_TEST_DEBUG)/src/NTriplesParser.o: src/NTriplesParser.cpp
+	$(CXX) $(CFLAGS_TEST_DEBUG) $(INC_TEST_DEBUG) -c src/NTriplesParser.cpp -o $(OBJDIR_TEST_DEBUG)/src/NTriplesParser.o
 
-$(OBJDIR_TEST_DEBUG)/extra/test/RDFNTriplesSerializer_test.o: extra/test/RDFNTriplesSerializer_test.cpp
-	$(CXX) $(CFLAGS_TEST_DEBUG) $(INC_TEST_DEBUG) -c extra/test/RDFNTriplesSerializer_test.cpp -o $(OBJDIR_TEST_DEBUG)/extra/test/RDFNTriplesSerializer_test.o
-
-$(OBJDIR_TEST_DEBUG)/extra/test/RDF_test.o: extra/test/RDF_test.cpp
-	$(CXX) $(CFLAGS_TEST_DEBUG) $(INC_TEST_DEBUG) -c extra/test/RDF_test.cpp -o $(OBJDIR_TEST_DEBUG)/extra/test/RDF_test.o
-
-$(OBJDIR_TEST_DEBUG)/extra/test/test.o: extra/test/test.cpp
-	$(CXX) $(CFLAGS_TEST_DEBUG) $(INC_TEST_DEBUG) -c extra/test/test.cpp -o $(OBJDIR_TEST_DEBUG)/extra/test/test.o
+$(OBJDIR_TEST_DEBUG)/src/NTriplesSerializer.o: src/NTriplesSerializer.cpp
+	$(CXX) $(CFLAGS_TEST_DEBUG) $(INC_TEST_DEBUG) -c src/NTriplesSerializer.cpp -o $(OBJDIR_TEST_DEBUG)/src/NTriplesSerializer.o
 
 $(OBJDIR_TEST_DEBUG)/src/RDF.o: src/RDF.cpp
 	$(CXX) $(CFLAGS_TEST_DEBUG) $(INC_TEST_DEBUG) -c src/RDF.cpp -o $(OBJDIR_TEST_DEBUG)/src/RDF.o
 
-$(OBJDIR_TEST_DEBUG)/src/RDFNTriplesParser.o: src/RDFNTriplesParser.cpp
-	$(CXX) $(CFLAGS_TEST_DEBUG) $(INC_TEST_DEBUG) -c src/RDFNTriplesParser.cpp -o $(OBJDIR_TEST_DEBUG)/src/RDFNTriplesParser.o
+$(OBJDIR_TEST_DEBUG)/test/NTriplesParser_test.o: test/NTriplesParser_test.cpp
+	$(CXX) $(CFLAGS_TEST_DEBUG) $(INC_TEST_DEBUG) -c test/NTriplesParser_test.cpp -o $(OBJDIR_TEST_DEBUG)/test/NTriplesParser_test.o
 
-$(OBJDIR_TEST_DEBUG)/src/RDFNTriplesSerializer.o: src/RDFNTriplesSerializer.cpp
-	$(CXX) $(CFLAGS_TEST_DEBUG) $(INC_TEST_DEBUG) -c src/RDFNTriplesSerializer.cpp -o $(OBJDIR_TEST_DEBUG)/src/RDFNTriplesSerializer.o
+$(OBJDIR_TEST_DEBUG)/test/NTriplesSerializer_test.o: test/NTriplesSerializer_test.cpp
+	$(CXX) $(CFLAGS_TEST_DEBUG) $(INC_TEST_DEBUG) -c test/NTriplesSerializer_test.cpp -o $(OBJDIR_TEST_DEBUG)/test/NTriplesSerializer_test.o
+
+$(OBJDIR_TEST_DEBUG)/test/RDF_test.o: test/RDF_test.cpp
+	$(CXX) $(CFLAGS_TEST_DEBUG) $(INC_TEST_DEBUG) -c test/RDF_test.cpp -o $(OBJDIR_TEST_DEBUG)/test/RDF_test.o
+
+$(OBJDIR_TEST_DEBUG)/test/test.o: test/test.cpp
+	$(CXX) $(CFLAGS_TEST_DEBUG) $(INC_TEST_DEBUG) -c test/test.cpp -o $(OBJDIR_TEST_DEBUG)/test/test.o
 
 clean_test_debug: 
 	rm -f $(OBJ_TEST_DEBUG) $(OUT_TEST_DEBUG)
 	rm -rf bin/Debug
-	rm -rf $(OBJDIR_TEST_DEBUG)/extra/test
 	rm -rf $(OBJDIR_TEST_DEBUG)/src
+	rm -rf $(OBJDIR_TEST_DEBUG)/test
 
 .PHONY: before_debug after_debug clean_debug before_release after_release clean_release before_release_native after_release_native clean_release_native before_release_native_c after_release_native_c clean_release_native_c before_test_debug after_test_debug clean_test_debug
 

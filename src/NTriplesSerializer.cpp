@@ -4,7 +4,9 @@
 
 #include <string.h>
 
-#include "RDFNTriplesSerializer.h"
+#include "NTriplesSerializer.h"
+
+using namespace smallrdf;
 
 
 NTriplesSerializer::NTriplesSerializer()
@@ -14,7 +16,7 @@ NTriplesSerializer::NTriplesSerializer()
       _end(0) {
 }
 
-const uint8_t* NTriplesSerializer::serialize(RDFDataset* dataset) {
+const uint8_t* NTriplesSerializer::serialize(Dataset* dataset) {
   _length = datasetSize(dataset);
   _buf = _cur = new uint8_t[_length];
   _end = _cur + _length;
@@ -24,7 +26,7 @@ const uint8_t* NTriplesSerializer::serialize(RDFDataset* dataset) {
   return _buf;
 }
 
-const uint8_t* NTriplesSerializer::serialize_static(RDFDataset* dataset) {
+const uint8_t* NTriplesSerializer::serialize_static(Dataset* dataset) {
   NTriplesSerializer serializer;
 
   return serializer.serialize(dataset);
@@ -35,12 +37,12 @@ void NTriplesSerializer::write(const char chr) {
   _cur++;
 }
 
-void NTriplesSerializer::write(const RDFString* str) {
+void NTriplesSerializer::write(const String* str) {
   memcpy(_cur, str->c_str(), str->length());
   _cur += str->length();
 }
 
-size_t NTriplesSerializer::datasetSize(const RDFDataset* dataset) {
+size_t NTriplesSerializer::datasetSize(const Dataset* dataset) {
   size_t size = 1; // Reserve for the terminating NULL
 
   for (int i = 0; i < dataset->quads.length(); i++)
@@ -49,19 +51,19 @@ size_t NTriplesSerializer::datasetSize(const RDFDataset* dataset) {
   return size;
 }
 
-void NTriplesSerializer::serializeDataset(const RDFDataset* dataset) {
+void NTriplesSerializer::serializeDataset(const Dataset* dataset) {
   for (int i = 0; i < dataset->quads.length(); i++)
     serializeQuad(dataset->quads.get(i));
 
   write(static_cast<char>(0));
 }
 
-size_t NTriplesSerializer::quadSize(const RDFQuad* quad) {
+size_t NTriplesSerializer::quadSize(const Quad* quad) {
   return termSize(quad->subject) + termSize(quad->predicate)
       + termSize(quad->object) + termSize(quad->graph) + 5;
 }
 
-void NTriplesSerializer::serializeQuad(const RDFQuad* quad) {
+void NTriplesSerializer::serializeQuad(const Quad* quad) {
   serializeTerm(quad->subject);
   write(' ');
   serializeTerm(quad->predicate);
@@ -78,39 +80,39 @@ void NTriplesSerializer::serializeQuad(const RDFQuad* quad) {
   write('\n');
 }
 
-size_t NTriplesSerializer::termSize(const RDFTerm* term) {
+size_t NTriplesSerializer::termSize(const Term* term) {
   if (term == 0)
     return 0;
 
   switch (term->termType) {
-    case RDF_NAMED_NODE:
+    case _NAMED_NODE:
       return term->value->length() + 2;
-    case RDF_LITERAL:
-      return literalSize(reinterpret_cast<const RDFLiteral*>(term));
-    case RDF_BLANK_NODE:
+    case _LITERAL:
+      return literalSize(reinterpret_cast<const Literal*>(term));
+    case _BLANK_NODE:
       return term->value->length() + 2;
     default:
       return 0;
   }
 }
 
-void NTriplesSerializer::serializeTerm(const RDFTerm* term) {
+void NTriplesSerializer::serializeTerm(const Term* term) {
   switch (term->termType) {
-    case RDF_NAMED_NODE:
+    case _NAMED_NODE:
       serializeIri(term->value);
       return;
-    case RDF_LITERAL:
-      serializeLiteral(reinterpret_cast<const RDFLiteral*>(term));
+    case _LITERAL:
+      serializeLiteral(reinterpret_cast<const Literal*>(term));
       return;
-    case RDF_BLANK_NODE:
-      serializeBlankNode(reinterpret_cast<const RDFBlankNode*>(term));
+    case _BLANK_NODE:
+      serializeBlankNode(reinterpret_cast<const BlankNode*>(term));
       return;
     default:
       return;
   }
 }
 
-size_t NTriplesSerializer::literalSize(const RDFLiteral* literal) {
+size_t NTriplesSerializer::literalSize(const Literal* literal) {
   size_t size = literal->value->length() + 2;
 
   if (literal->language) {
@@ -122,7 +124,7 @@ size_t NTriplesSerializer::literalSize(const RDFLiteral* literal) {
   return size;
 }
 
-void NTriplesSerializer::serializeLiteral(const RDFLiteral* literal) {
+void NTriplesSerializer::serializeLiteral(const Literal* literal) {
   write('"');
   write(literal->value);
   write('"');
@@ -137,13 +139,13 @@ void NTriplesSerializer::serializeLiteral(const RDFLiteral* literal) {
   }
 }
 
-void NTriplesSerializer::serializeBlankNode(const RDFBlankNode* blankNode) {
+void NTriplesSerializer::serializeBlankNode(const BlankNode* blankNode) {
   write('_');
   write(':');
   write(blankNode->value);
 }
 
-void NTriplesSerializer::serializeIri(const RDFString* iri) {
+void NTriplesSerializer::serializeIri(const String* iri) {
   write('<');
   write(iri);
   write('>');

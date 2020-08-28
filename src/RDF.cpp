@@ -7,18 +7,20 @@
 
 #include "RDF.hpp"
 
+using namespace smallrdf;
 
-RDFString::RDFString()
-: RDFString(nullptr) {
+
+String::String()
+: String(nullptr) {
 }
 
-RDFString::RDFString(const char* buf)
+String::String(const char* buf)
 : _data(buf),
   _size(buf ? strlen(buf) + 1 : 0),
   _allocated(false) {
 }
 
-RDFString::RDFString(const uint8_t* buf, size_t size)
+String::String(const uint8_t* buf, size_t size)
 : _data(reinterpret_cast<const char*>(buf)),
   _size(size),
   _allocated(false) {
@@ -35,8 +37,8 @@ RDFString::RDFString(const uint8_t* buf, size_t size)
 }
 
 #ifdef ARDUINO
-RDFString::RDFString(String str, bool copy)
-: RDFString(str.c_str())
+String::String(String str, bool copy)
+: String(str.c_str())
  {
   if (copy) {
     _data = new const char[_size]{0};
@@ -46,14 +48,14 @@ RDFString::RDFString(String str, bool copy)
 }
 #endif  // ARDUINO
 
-RDFString::~RDFString() {
+String::~String() {
   if (_allocated && _data) {
     _allocated = false;
     delete[] _data;
   }
 }
 
-bool RDFString::equals(const RDFString& other) const {
+bool String::equals(const String& other) const {
   if (_size != other._size)
     return false;
   if ((!_data || !other._data) && _data != other._data)
@@ -62,7 +64,7 @@ bool RDFString::equals(const RDFString& other) const {
   return !memcmp(_data, other._data, _size);
 }
 
-bool RDFString::equals(const RDFString* other) const {
+bool String::equals(const String* other) const {
   if (this == other)
     return true;
   else if (!other)
@@ -70,12 +72,12 @@ bool RDFString::equals(const RDFString* other) const {
   return equals(*other);
 }
 
-RDFTerm::RDFTerm(const RDFTermType termType, const RDFString* value)
+Term::Term(const TermType termType, const String* value)
 : termType(termType),
   value(value) {
 }
 
-bool RDFTerm::equals(const RDFTerm* other) const {
+bool Term::equals(const Term* other) const {
   if (this == other) {
     return true;
   }
@@ -83,47 +85,47 @@ bool RDFTerm::equals(const RDFTerm* other) const {
   return termType == other->termType && value->equals(other->value);
 }
 
-RDFNamedNode::RDFNamedNode(const RDFString* value)
-: RDFTerm(RDF_NAMED_NODE, value) {
+NamedNode::NamedNode(const String* value)
+: Term(_NAMED_NODE, value) {
 }
 
-RDFLiteral::RDFLiteral(const RDFString* value, const RDFString* language,
-                       const RDFString* datatype)
-: RDFTerm(RDF_LITERAL, value),
+Literal::Literal(const String* value, const String* language,
+                       const String* datatype)
+: Term(_LITERAL, value),
   language(language),
   datatype(datatype) {
 }
 
-bool RDFLiteral::equals(const RDFTerm* other) const {
+bool Literal::equals(const Term* other) const {
   if (this == other) {
     return true;
   }
 
-  if (other->termType != RDF_LITERAL) {
+  if (other->termType != _LITERAL) {
     return false;
   }
 
-  const RDFLiteral* otherLiteral = reinterpret_cast<const RDFLiteral*>(other);
+  const Literal* otherLiteral = reinterpret_cast<const Literal*>(other);
 
   return value->equals(otherLiteral->value)
       && language->equals(otherLiteral->language)
       && datatype->equals(otherLiteral->datatype);
 }
 
-RDFBlankNode::RDFBlankNode(const RDFString* value)
-: RDFTerm(RDF_BLANK_NODE, value) {
+BlankNode::BlankNode(const String* value)
+: Term(_BLANK_NODE, value) {
 }
 
-RDFQuad::RDFQuad(const RDFTerm* subject, const RDFTerm* predicate,
-                 const RDFTerm* object, const RDFTerm* graph)
+Quad::Quad(const Term* subject, const Term* predicate,
+                 const Term* object, const Term* graph)
 : subject(subject),
   predicate(predicate),
   object(object),
   graph(graph) {
 }
 
-const bool RDFQuad::match(const RDFTerm* subject, const RDFTerm* predicate,
-                          const RDFTerm* object, const RDFTerm* graph) const {
+const bool Quad::match(const Term* subject, const Term* predicate,
+                          const Term* object, const Term* graph) const {
   if (subject && !this->subject->equals(subject)) {
     return false;
   }
@@ -143,16 +145,16 @@ const bool RDFQuad::match(const RDFTerm* subject, const RDFTerm* predicate,
   return true;
 }
 
-RDFDataset::~RDFDataset() {
+Dataset::~Dataset() {
   for (int i = 0; i < _datasets.length(); ++i)
     delete _datasets.get(i);
 }
 
-const RDFQuad* RDFDataset::find(const RDFTerm* subject,
-                                const RDFTerm* predicate, const RDFTerm* object,
-                                const RDFTerm* graph) {
+const Quad* Dataset::find(const Term* subject,
+                                const Term* predicate, const Term* object,
+                                const Term* graph) {
   for (int i = 0; i < quads.length(); i++) {
-    const RDFQuad* quad = quads.get(i);
+    const Quad* quad = quads.get(i);
 
     if (quad->match(subject, predicate, object, graph))
       return quad;
@@ -161,12 +163,12 @@ const RDFQuad* RDFDataset::find(const RDFTerm* subject,
   return NULL;
 }
 
-RDFDataset* RDFDataset::match(const RDFTerm* subject, const RDFTerm* predicate,
-                              const RDFTerm* object, const RDFTerm* graph) {
-  RDFDataset* matches = _datasets.add(new RDFDataset());
+Dataset* Dataset::match(const Term* subject, const Term* predicate,
+                              const Term* object, const Term* graph) {
+  Dataset* matches = _datasets.add(new Dataset());
 
   for (int i = 0; i < quads.length(); i++) {
-    const RDFQuad* quad = quads.get(i);
+    const Quad* quad = quads.get(i);
 
     if (quad->match(subject, predicate, object, graph))
       matches->quads.add(quad);
@@ -175,7 +177,7 @@ RDFDataset* RDFDataset::match(const RDFTerm* subject, const RDFTerm* predicate,
   return matches;
 }
 
-RDFDocument::~RDFDocument() {
+Document::~Document() {
   for (int i = 0; i < quads.length(); i++)
     delete quads.get(i);
 
@@ -186,80 +188,80 @@ RDFDocument::~RDFDocument() {
     delete _strings.get(i);
 }
 
-const RDFString* RDFDocument::string(const char* buf) {
-  const RDFString cur(buf);
-  const RDFString* found = findString(&cur);
+const String* Document::string(const char* buf) {
+  const String cur(buf);
+  const String* found = findString(&cur);
 
   if (found != 0) {
     return found;
   }
 
-  return reinterpret_cast<RDFString*>(_strings.add(new RDFString(buf)));
+  return reinterpret_cast<String*>(_strings.add(new String(buf)));
 }
 
-const RDFString* RDFDocument::string(const uint8_t* buf, const size_t length) {
-  const RDFString cur(buf, length);
-  const RDFString* found = findString(&cur);
+const String* Document::string(const uint8_t* buf, const size_t length) {
+  const String cur(buf, length);
+  const String* found = findString(&cur);
 
   if (found != 0) {
     return found;
   }
 
-  return reinterpret_cast<RDFString*>(_strings.add(new RDFString(buf, length)));
+  return reinterpret_cast<String*>(_strings.add(new String(buf, length)));
 }
 
-const RDFNamedNode* RDFDocument::namedNode(const RDFString* value) {
-  const RDFNamedNode cur(value);
-  const RDFTerm* found = findTerm(&cur);
+const NamedNode* Document::namedNode(const String* value) {
+  const NamedNode cur(value);
+  const Term* found = findTerm(&cur);
 
   if (found != 0) {
-    return reinterpret_cast<const RDFNamedNode*>(found);
+    return reinterpret_cast<const NamedNode*>(found);
   }
 
-  return reinterpret_cast<const RDFNamedNode*>(_terms.add(
-      new RDFNamedNode(value)));
+  return reinterpret_cast<const NamedNode*>(_terms.add(
+      new NamedNode(value)));
 }
 
-const RDFLiteral* RDFDocument::literal(const RDFString* value,
-                                       const RDFString* language,
-                                       const RDFString* datatype) {
-  const RDFLiteral cur(value, language, datatype);
-  const RDFTerm* found = findTerm(&cur);
+const Literal* Document::literal(const String* value,
+                                       const String* language,
+                                       const String* datatype) {
+  const Literal cur(value, language, datatype);
+  const Term* found = findTerm(&cur);
 
   if (found != 0) {
-    return reinterpret_cast<const RDFLiteral*>(found);
+    return reinterpret_cast<const Literal*>(found);
   }
 
-  return reinterpret_cast<const RDFLiteral*>(_terms.add(
-      new RDFLiteral(value, language, datatype)));
+  return reinterpret_cast<const Literal*>(_terms.add(
+      new Literal(value, language, datatype)));
 }
 
-const RDFBlankNode* RDFDocument::blankNode(const RDFString* value) {
-  const RDFBlankNode cur(value);
-  const RDFTerm* found = findTerm(&cur);
+const BlankNode* Document::blankNode(const String* value) {
+  const BlankNode cur(value);
+  const Term* found = findTerm(&cur);
 
   if (found != 0) {
-    return reinterpret_cast<const RDFBlankNode*>(found);
+    return reinterpret_cast<const BlankNode*>(found);
   }
 
-  return reinterpret_cast<const RDFBlankNode*>(_terms.add(
-      new RDFBlankNode(value)));
+  return reinterpret_cast<const BlankNode*>(_terms.add(
+      new BlankNode(value)));
 }
 
-const RDFQuad* RDFDocument::triple(const RDFTerm* subject,
-                                   const RDFTerm* predicate,
-                                   const RDFTerm* object,
-                                   const RDFTerm* graph) {
-  return quads.add(new RDFQuad(subject, predicate, object, graph));
+const Quad* Document::triple(const Term* subject,
+                                   const Term* predicate,
+                                   const Term* object,
+                                   const Term* graph) {
+  return quads.add(new Quad(subject, predicate, object, graph));
 }
 
-RDFDataset* RDFDocument::dataset() {
-  return _datasets.add(new RDFDataset());
+Dataset* Document::dataset() {
+  return _datasets.add(new Dataset());
 }
 
-const RDFString* RDFDocument::findString(const RDFString* newStr) const {
+const String* Document::findString(const String* newStr) const {
   for (int i = 0; i < _strings.length(); i++) {
-    RDFString* cur = _strings.get(i);
+    String* cur = _strings.get(i);
 
     if (cur->equals(newStr))
       return cur;
@@ -268,9 +270,9 @@ const RDFString* RDFDocument::findString(const RDFString* newStr) const {
   return NULL;
 }
 
-const RDFTerm* RDFDocument::findTerm(const RDFTerm* newTerm) const {
+const Term* Document::findTerm(const Term* newTerm) const {
   for (int i = 0; i < _terms.length(); i++) {
-    RDFTerm* cur = _terms.get(i);
+    Term* cur = _terms.get(i);
 
     if (cur->equals(newTerm))
       return cur;
@@ -280,165 +282,165 @@ const RDFTerm* RDFDocument::findTerm(const RDFTerm* newTerm) const {
 }
 
 #ifdef ARDUINO
-const RDFString* RDFDocument::string(String str, bool copy) {
-  const RDFString cur(str, copy);
-  const RDFString* found = findString(&cur);
+const String* Document::string(String str, bool copy) {
+  const String cur(str, copy);
+  const String* found = findString(&cur);
 
   if (found != 0) {
     return found;
   }
 
-  return reinterpret_cast<RDFString*>(_strings.add(new RDFString(str, copy)));
+  return reinterpret_cast<String*>(_strings.add(new String(str, copy)));
 }
 #endif // ARDUINO
 
 // Implementation of C interface ===============================================
-// RDFString -------------------------------------------------------------------
-RDFString* RDFString_create(const uint8_t* data, const size_t size) {
+// String -------------------------------------------------------------------
+String* rdf_string_create(const uint8_t* data, const size_t size) {
   throw logic_error("Not implemented");
   return nullptr;
 }
 
-RDFString* RDFString_create_str(const char* str) {
+String* rdf_string_create_cstr(const char* str) {
   throw logic_error("Not implemented");
   return nullptr;
 }
 
-void RDFString_release(RDFString* self) {
+void rdf_string_release(String* self) {
   throw logic_error("Not implemented");
 }
 
-bool RDFString_equals(const RDFString* self, const RDFString* other) {
+bool rdf_string_equals(const String* self, const String* other) {
   throw logic_error("Not implemented");
   return false;
 }
 
-// RDFTerm ---------------------------------------------------------------------
-RDFTerm* RDFTerm_create(const RDFTermType termType, const RDFString* value) {
+// Term ---------------------------------------------------------------------
+Term* rdf_term_create(const TermType termType, const String* value) {
   throw logic_error("Not implemented");
   return nullptr;
 }
 
-void RDFTerm_release(RDFTerm* self) {
+void rdf_term_release(Term* self) {
   throw logic_error("Not implemented");
 }
 
-bool RDFTerm_equals(const RDFTerm* self, const RDFTerm* other) {
+bool rdf_term_equals(const Term* self, const Term* other) {
   throw logic_error("Not implemented");
   return false;
 }
 
-// RDFNamedNode ----------------------------------------------------------------
-RDFNamedNode* RDFNamedNode_create(const RDFString* value) {
+// NamedNode ----------------------------------------------------------------
+NamedNode* rdf_namednode_create(const String* value) {
   throw logic_error("Not implemented");
   return nullptr;
 }
 
-void RDFNamedNode_release(RDFNamedNode* self) {
+void rdf_namednode_release(NamedNode* self) {
   throw logic_error("Not implemented");
 }
 
-// RDFLiteral ------------------------------------------------------------------
-RDFLiteral* RDFLiteral_create_simple(const RDFString* value) {
-  throw logic_error("Not implemented");
-  return nullptr;
-}
-
-RDFLiteral* RDFLiteral_create(const RDFString* value, const RDFString* language,
-                              const RDFString* datatype) {
+// Literal ------------------------------------------------------------------
+Literal* rdf_literal_create_simple(const String* value) {
   throw logic_error("Not implemented");
   return nullptr;
 }
 
-void RDFLiteral_release(RDFLiteral* self) {
+Literal* rdf_literal_create(const String* value, const String* language,
+                              const String* datatype) {
+  throw logic_error("Not implemented");
+  return nullptr;
+}
+
+void rdf_literal_release(Literal* self) {
   throw logic_error("Not implemented");
 }
 
-bool RDFLiteral_equals(const RDFTerm* self, const RDFTerm* other) {
+bool rdf_literal_equals(const Term* self, const Term* other) {
   throw logic_error("Not implemented");
   return false;
 }
 
-// RDFBlankNode ----------------------------------------------------------------
-RDFBlankNode* RDFBlankNode_create(const RDFString* value) {
+// BlankNode ----------------------------------------------------------------
+BlankNode* rdf_blanknode_create(const String* value) {
   throw logic_error("Not implemented");
   return nullptr;
 }
 
-void RDFBlankNode_release(RDFBlankNode* self) {
+void rdf_blanknode_release(BlankNode* self) {
   throw logic_error("Not implemented");
 }
 
-// RDFQuad ---------------------------------------------------------------------
-RDFQuad* RDFQuad_create(const RDFTerm* subject, const RDFTerm* predicate,
-          const RDFTerm* object, const RDFTerm* graph) {
+// Quad ---------------------------------------------------------------------
+Quad* rdf_quad_create(const Term* subject, const Term* predicate,
+          const Term* object, const Term* graph) {
   throw logic_error("Not implemented");
   return nullptr;
 }
 
-void RDFQuad_release(RDFQuad* self) {
+void rdf_quad_release(Quad* self) {
   throw logic_error("Not implemented");
 }
 
-bool RDFQuad_match_subject(const RDFQuad* self, const RDFTerm* subject) {
+bool rdf_quad_match_subject(const Quad* self, const Term* subject) {
   throw logic_error("Not implemented");
   return false;
 }
 
-bool RDFQuad_match(const RDFQuad* self, const RDFTerm* subject, const RDFTerm* predicate,
-                   const RDFTerm* object, const RDFTerm* graph) {
+bool rdf_quad_match(const Quad* self, const Term* subject, const Term* predicate,
+                   const Term* object, const Term* graph) {
   throw logic_error("Not implemented");
   return false;
 }
 
-// RDFDataset ------------------------------------------------------------------
-RDFDataset* RDFDataset_create() {
+// Dataset ------------------------------------------------------------------
+Dataset* rdf_dataset_create() {
   throw logic_error("Not implemented");
   return nullptr;
 }
 
-void RDFDataset_release(RDFDataset* self) {
+void rdf_dataset_release(Dataset* self) {
   throw logic_error("Not implemented");
 }
 
-const RDFQuad* RDFDataset_find_subject(const RDFDataset* self, const RDFTerm* subject) {
-  throw logic_error("Not implemented");
-  return nullptr;
-}
-
-const RDFQuad* RDFDataset_find(const RDFDataset* self, const RDFTerm* subject,
-                               const RDFTerm* predicate, const RDFTerm* object, const RDFTerm* graph) {
+const Quad* rdf_dataset_find_subject(const Dataset* self, const Term* subject) {
   throw logic_error("Not implemented");
   return nullptr;
 }
 
-RDFDataset* RDFDataset_match_subject(const RDFDataset* self, const RDFTerm* subject) {
+const Quad* rdf_dataset_find(const Dataset* self, const Term* subject,
+                               const Term* predicate, const Term* object, const Term* graph) {
   throw logic_error("Not implemented");
   return nullptr;
 }
 
-RDFDataset* RDFDataset_match(const RDFDataset* self, const RDFTerm* subject, const RDFTerm* predicate,
-                             const RDFTerm* object, const RDFTerm* graph) {
+Dataset* rdf_dataset_match_subject(const Dataset* self, const Term* subject) {
   throw logic_error("Not implemented");
   return nullptr;
 }
 
-// RDFDocument -----------------------------------------------------------------
-RDFDocument* RDFDocument_create() {
+Dataset* rdf_dataset_match(const Dataset* self, const Term* subject, const Term* predicate,
+                             const Term* object, const Term* graph) {
   throw logic_error("Not implemented");
   return nullptr;
 }
 
-void RDFDocument_release(RDFDocument* self) {
-  throw logic_error("Not implemented");
-}
-
-const RDFString* RDFDocument_rfindString(const RDFDocument* self, const RDFString* newStr) {
+// Document -----------------------------------------------------------------
+Document* rdf_document_create() {
   throw logic_error("Not implemented");
   return nullptr;
 }
 
-const RDFTerm* RDFDocument_rfindTerm(const RDFDocument* self, const RDFTerm* newTerm) {
+void rdf_document_release(Document* self) {
+  throw logic_error("Not implemented");
+}
+
+const String* rdf_document_rfindString(const Document* self, const String* newStr) {
+  throw logic_error("Not implemented");
+  return nullptr;
+}
+
+const Term* rdf_document_rfindTerm(const Document* self, const Term* newTerm) {
   throw logic_error("Not implemented");
   return nullptr;
 }
