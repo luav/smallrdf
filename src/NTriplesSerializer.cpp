@@ -85,11 +85,11 @@ size_t NTriplesSerializer::termSize(const Term* term) {
     return 0;
 
   switch (term->termType) {
-    case _NAMED_NODE:
+    case RTT_NAMED_NODE:
       return term->value->length() + 2;
-    case _LITERAL:
+    case RTT_LITERAL:
       return literalSize(reinterpret_cast<const Literal*>(term));
-    case _BLANK_NODE:
+    case RTT_BLANK_NODE:
       return term->value->length() + 2;
     default:
       return 0;
@@ -98,13 +98,13 @@ size_t NTriplesSerializer::termSize(const Term* term) {
 
 void NTriplesSerializer::serializeTerm(const Term* term) {
   switch (term->termType) {
-    case _NAMED_NODE:
+    case RTT_NAMED_NODE:
       serializeIri(term->value);
       return;
-    case _LITERAL:
+    case RTT_LITERAL:
       serializeLiteral(reinterpret_cast<const Literal*>(term));
       return;
-    case _BLANK_NODE:
+    case RTT_BLANK_NODE:
       serializeBlankNode(reinterpret_cast<const BlankNode*>(term));
       return;
     default:

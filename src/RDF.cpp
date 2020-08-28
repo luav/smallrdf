@@ -4,7 +4,6 @@
 
 #include <string.h>
 #include <assert.h>
-
 #include "RDF.hpp"
 
 using namespace smallrdf;
@@ -28,10 +27,9 @@ String::String(const uint8_t* buf, size_t size)
   if (_data && _size && _data[_size-1] != 0) {
     //char** writable_data = const_cast<char**>(&this->_data);
     //writable_data = new char[_size];
-    ++_size;
-    _data = new const char[_size]{0};
-    memcpy(const_cast<char*>(_data), buf, _size-1);
+    _data = new const char[++_size]{0};
     _allocated = true;
+    memcpy(const_cast<char*>(_data), buf, _size-1);
   }
   assert((!_data || _size >= strlen(_data) + 1) && "Invalid size of the data");
 }
@@ -56,11 +54,8 @@ String::~String() {
 }
 
 bool String::equals(const String& other) const {
-  if (_size != other._size)
+  if (_size != other._size || !_data ^ !other._data)
     return false;
-  if ((!_data || !other._data) && _data != other._data)
-    return false;
-
   return !memcmp(_data, other._data, _size);
 }
 
@@ -86,12 +81,12 @@ bool Term::equals(const Term* other) const {
 }
 
 NamedNode::NamedNode(const String* value)
-: Term(_NAMED_NODE, value) {
+: Term(RTT_NAMED_NODE, value) {
 }
 
 Literal::Literal(const String* value, const String* language,
                        const String* datatype)
-: Term(_LITERAL, value),
+: Term(RTT_LITERAL, value),
   language(language),
   datatype(datatype) {
 }
@@ -101,7 +96,7 @@ bool Literal::equals(const Term* other) const {
     return true;
   }
 
-  if (other->termType != _LITERAL) {
+  if (other->termType != RTT_LITERAL) {
     return false;
   }
 
@@ -113,7 +108,7 @@ bool Literal::equals(const Term* other) const {
 }
 
 BlankNode::BlankNode(const String* value)
-: Term(_BLANK_NODE, value) {
+: Term(RTT_BLANK_NODE, value) {
 }
 
 Quad::Quad(const Term* subject, const Term* predicate,

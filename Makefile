@@ -12,14 +12,14 @@ LD = g++
 WINDRES = windres
 
 INC = 
-CFLAGS = -Wnon-virtual-dtor -Winit-self -Wcast-align -Wundef -Wfloat-equal -Wunreachable-code -Wmissing-include-dirs -Weffc++ -Wzero-as-null-pointer-constant -std=c++17 -fexceptions -fstack-protector -fstack-clash-protection -Werror=format-security -Wl,-z,defs -Wl,-z,now -Wl,-z,relro
+CFLAGS = -Wnon-virtual-dtor -Winit-self -Wcast-align -Wundef -Wfloat-equal -Wunreachable-code -Wmissing-include-dirs -Weffc++ -Wzero-as-null-pointer-constant -fexceptions -fstack-protector -fstack-clash-protection -Werror=format-security -Wl,-z,defs -Wl,-z,now -Wl,-z,relro
 RESINC = 
 LIBDIR = 
 LIB = 
 LDFLAGS = 
 
 INC_DEBUG = $(INC) -Iinclude
-CFLAGS_DEBUG = $(CFLAGS) -Wshadow -Wredundant-decls -Winline -Wswitch-enum -Wswitch-default -Wmain -Wall -fPIC -Og -g -shared -fasynchronous-unwind-tables -fstack-protector-all -fcf-protection -D_FORTIFY_SOURCE=2 -D_GLIBCXX_ASSERTIONS
+CFLAGS_DEBUG = $(CFLAGS) -Wshadow -Wredundant-decls -Winline -Wswitch-enum -Wswitch-default -Wmain -Wall -std=c++17 -fPIC -Og -g -shared -fasynchronous-unwind-tables -fstack-protector-all -fcf-protection -D_FORTIFY_SOURCE=2 -D_GLIBCXX_ASSERTIONS
 RESINC_DEBUG = $(RESINC)
 RCFLAGS_DEBUG = $(RCFLAGS)
 LIBDIR_DEBUG = $(LIBDIR)
@@ -30,7 +30,7 @@ DEP_DEBUG =
 OUT_DEBUG = bin/Debug/smallrdf.so
 
 INC_RELEASE = $(INC) -Iinclude
-CFLAGS_RELEASE = $(CFLAGS) -fomit-frame-pointer -fPIC -shared -pipe -D_FORTIFY_SOURCE=1
+CFLAGS_RELEASE = $(CFLAGS) -fomit-frame-pointer -std=c++17 -fPIC -shared -pipe -D_FORTIFY_SOURCE=1
 RESINC_RELEASE = $(RESINC)
 RCFLAGS_RELEASE = $(RCFLAGS)
 LIBDIR_RELEASE = $(LIBDIR)
@@ -41,7 +41,7 @@ DEP_RELEASE =
 OUT_RELEASE = bin/Release/smallrdf.so
 
 INC_RELEASE_NATIVE = $(INC) -Iinclude
-CFLAGS_RELEASE_NATIVE = $(CFLAGS) -fomit-frame-pointer -shared -pipe -fpic -march=native -D_FORTIFY_SOURCE=1
+CFLAGS_RELEASE_NATIVE = $(CFLAGS) -fomit-frame-pointer -std=c++17 -shared -pipe -fpic -march=native -D_FORTIFY_SOURCE=1
 RESINC_RELEASE_NATIVE = $(RESINC)
 RCFLAGS_RELEASE_NATIVE = $(RCFLAGS)
 LIBDIR_RELEASE_NATIVE = $(LIBDIR)
@@ -52,7 +52,7 @@ DEP_RELEASE_NATIVE =
 OUT_RELEASE_NATIVE = bin/Release/smallrdf.so
 
 INC_RELEASE_NATIVE_C = $(INC) -Iinclude
-CFLAGS_RELEASE_NATIVE_C = $(CFLAGS) -fomit-frame-pointer -shared -pipe -fpic -march=native -D_FORTIFY_SOURCE=1
+CFLAGS_RELEASE_NATIVE_C = $(CFLAGS) -fomit-frame-pointer -shared -pipe -fpic -march=native -std=c17 -D_FORTIFY_SOURCE=1
 RESINC_RELEASE_NATIVE_C = $(RESINC)
 RCFLAGS_RELEASE_NATIVE_C = $(RCFLAGS)
 LIBDIR_RELEASE_NATIVE_C = $(LIBDIR)
@@ -63,7 +63,7 @@ DEP_RELEASE_NATIVE_C =
 OUT_RELEASE_NATIVE_C = bin/Release/smallrdf.so
 
 INC_TEST_DEBUG = $(INC) -Iinclude
-CFLAGS_TEST_DEBUG = $(CFLAGS) -Wshadow -Wredundant-decls -Winline -Wswitch-enum -Wswitch-default -Wmain -Wall -Og -g -fasynchronous-unwind-tables -fstack-protector-all -fpie -Wl,-pie -D_FORTIFY_SOURCE=2 -D_GLIBCXX_ASSERTIONS
+CFLAGS_TEST_DEBUG = $(CFLAGS) -Wshadow -Wredundant-decls -Winline -Wswitch-enum -Wswitch-default -Wmain -Wall -std=c++17 -Og -g -fasynchronous-unwind-tables -fstack-protector-all -fpie -Wl,-pie -D_FORTIFY_SOURCE=2 -D_GLIBCXX_ASSERTIONS
 RESINC_TEST_DEBUG = $(RESINC)
 RCFLAGS_TEST_DEBUG = $(RCFLAGS)
 LIBDIR_TEST_DEBUG = $(LIBDIR)
@@ -179,8 +179,8 @@ $(OBJDIR_RELEASE_NATIVE_C)/src/NTriplesParser.o: src/NTriplesParser.cpp
 $(OBJDIR_RELEASE_NATIVE_C)/src/NTriplesSerializer.o: src/NTriplesSerializer.cpp
 	$(CXX) $(CFLAGS_RELEASE_NATIVE_C) $(INC_RELEASE_NATIVE_C) -c src/NTriplesSerializer.cpp -o $(OBJDIR_RELEASE_NATIVE_C)/src/NTriplesSerializer.o
 
-$(OBJDIR_RELEASE_NATIVE_C)/src/RDF.o: src/RDF.cpp
-	$(CXX) $(CFLAGS_RELEASE_NATIVE_C) $(INC_RELEASE_NATIVE_C) -c src/RDF.cpp -o $(OBJDIR_RELEASE_NATIVE_C)/src/RDF.o
+$(OBJDIR_RELEASE_NATIVE_C)/src/RDF.o: src/RDF.c
+	$(CC) $(CFLAGS_RELEASE_NATIVE_C) $(INC_RELEASE_NATIVE_C) -c src/RDF.c -o $(OBJDIR_RELEASE_NATIVE_C)/src/RDF.o
 
 clean_release_native_c: 
 	rm -f $(OBJ_RELEASE_NATIVE_C) $(OUT_RELEASE_NATIVE_C)

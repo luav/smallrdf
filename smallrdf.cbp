@@ -21,6 +21,7 @@
 					<Add option="-Wswitch-default" />
 					<Add option="-Wmain" />
 					<Add option="-Wall" />
+					<Add option="-std=c++17" />
 					<Add option="-fPIC" />
 					<Add option="-Og" />
 					<Add option="-g" />
@@ -42,6 +43,7 @@
 				<Option createStaticLib="1" />
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
+					<Add option="-std=c++17" />
 					<Add option="-fPIC" />
 					<Add option="-shared" />
 					<Add option="-pipe" />
@@ -62,6 +64,7 @@
 				<Option createStaticLib="1" />
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
+					<Add option="-std=c++17" />
 					<Add option="-shared" />
 					<Add option="-pipe" />
 					<Add option="-fpic" />
@@ -87,6 +90,7 @@
 					<Add option="-pipe" />
 					<Add option="-fpic" />
 					<Add option="-march=native" />
+					<Add option="-std=c17" />
 					<Add option="-D_FORTIFY_SOURCE=1" />
 					<Add directory="include" />
 				</Compiler>
@@ -109,6 +113,7 @@
 					<Add option="-Wswitch-default" />
 					<Add option="-Wmain" />
 					<Add option="-Wall" />
+					<Add option="-std=c++17" />
 					<Add option="-Og" />
 					<Add option="-g" />
 					<Add option="-fasynchronous-unwind-tables" />
@@ -134,7 +139,6 @@
 			<Add option="-Wmissing-include-dirs" />
 			<Add option="-Weffc++" />
 			<Add option="-Wzero-as-null-pointer-constant" />
-			<Add option="-std=c++17" />
 			<Add option="-fexceptions" />
 			<Add option="-fstack-protector" />
 			<Add option="-fstack-clash-protection" />
@@ -156,7 +160,16 @@
 		</Unit>
 		<Unit filename="src/NTriplesParser.cpp" />
 		<Unit filename="src/NTriplesSerializer.cpp" />
-		<Unit filename="src/RDF.cpp" />
+		<Unit filename="src/RDF.c">
+			<Option compilerVar="CC" />
+			<Option target="Release Native C" />
+		</Unit>
+		<Unit filename="src/RDF.cpp">
+			<Option target="Debug" />
+			<Option target="Release" />
+			<Option target="Release Native" />
+			<Option target="Test Debug" />
+		</Unit>
 		<Unit filename="test/NTriplesParser_test.cpp">
 			<Option target="Test Debug" />
 		</Unit>
