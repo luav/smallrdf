@@ -186,9 +186,7 @@ const String* NTriplesParser::readIRIRef()
 	auto buf = ++_cur;
 	while(hasNext() && getNext() != '>');  // Note: the cycle body is intentionally empty
 
-	String str(buf, _cur - buf - 1);
-	return _doc->string(str);  // Note: -1 to consider the increment upon the '>'
-//	return _doc->string(String(buf, _cur - buf - 1));  // Note: -1 to consider the increment upon the '>'
+	return _doc->string(String(buf, _cur - buf - 1));  // Note: -1 to consider the increment upon the '>'
 }
 
 bool NTriplesParser::isStringLiteralQuote() const

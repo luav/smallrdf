@@ -5,9 +5,10 @@
 #ifndef _HPP_
 #define _HPP_
 
-#if defined(ARDUINO)
+#ifdef ARDUINO
 #include <Arduino.h>
-#endif
+using AString = String;
+#endif  // ARDUINO
 
 #include "Container.hpp"
 #include "RDF.h"
@@ -35,23 +36,18 @@ public:
 	//!
 	//! \param buf const uint8_t*  - buffer, which may not have the null-terminator
 	//! \param size size_t  - size of the buffer
-//	//! \param acquire=false bool  - attempt to acquire the buffer
 	String(const uint8_t* buf, size_t size);
 #ifdef ARDUINO
-	explicit String(String str, bool copy = false);
+	explicit String(const AString& str, bool copy = false);
 #endif // ARDUINO
 
     //! \brief Acquire the string
     //!
     //! \param other String&&  - original string being acquired
 	String(String&& other)=default;
-//    //! \brief Become a view for the string
-//    //!
-//    //! \param other const String&  - original string that holds the data ownership
-//	String(const String& other)=delete;
-    //! \brief Acquire ownership of data, making other a view
+    //! \brief Acquire ownership of data if other's content, making other a view
     //!
-    //! \param other const String&  - original string could hold an ownership and becomes a view
+    //! \param other const String&  - original string, which could hold an ownership and becomes a view
 	String(String& other);
 
     //! \brief Acquire the string
@@ -102,33 +98,22 @@ public:
     //! \return String&  - resulting string
 	String& operator+=(const String& other);
 
-	//void acquire(const uint8_t* buf, size_t length);
-
 	const char* c_str() const
 		{ return reinterpret_cast<const char*>(_data); };
 	char* c_str()
 		{ return reinterpret_cast<char*>(_data); };
+
 	const uint8_t* data() const
 		{ return _data; };
 	uint8_t* data()
 		{ return _data; };
-//	//! \deprecated Replaced with standard-compliant data(). Remained only for
-//	//! the compatibility with the original API until the refactoring completion
-//	const uint8_t* buffer() const
-//		{ return reinterpret_cast<const uint8_t*>(_data); };
+
 	//! \brief String length without the null-terminator
 	size_t length() const
 		{ return _size ? _size-1 : 0; }
 	bool operator==(const String& other) const;
 	bool operator!=(const String& other) const
 		{ return !operator==(other); }
-//	//! \deprecated Replaced with standard-compliant operator==. Remained only for
-//	//! the compatibility with the original API until the refactoring completion
-//	bool equals(const String& other) const
-//		{ return operator==(other); }
-//	//! \deprecated Replaced with standard-compliant operator==. Remained only for
-//	//! the compatibility with the original API until the refactoring completion
-//	bool equals(const String* other) const;
 
 	bool allocated() const
 		{ return _allocated; }
@@ -159,10 +144,6 @@ public:
 		{ return kind == other.kind && *value == *other.value; }
 	virtual bool operator!=(const Term& other) const final
 		{ return !operator==(other); }
-//	//! \deprecated Replaced with standard-compliant operator==. Remained only for
-//	//! the compatibility with the original API until the refactoring completion
-//	virtual bool equals(const Term* other) const final
-//		{ return other && (this == other || operator==(*other)); }
 };
 
 class NamedNode: public Term {

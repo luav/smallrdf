@@ -24,18 +24,14 @@ template<typename T>
 struct Iterator {
 	using value_type = T;
 
-	//Iterator(const T& container);
 	virtual ~Iterator()  {}
 
 	virtual Iterator* next() const=0;
 	//virtual Iterator& operator++()=0;  //!< Preincrement
 	//virtual const Iterator& operator++(int)=0 const;  //!< Postincrement
-	//virtual Iterator& operator--()=0;
-	//virtual Iterator operator--(int)=0;
 
 	virtual T& operator*()=0;
-	// Note: const varians should not be made final to allows non-abstract return types
-	virtual const T& operator*() const
+	virtual const T& operator*() const final
 		{ return **const_cast<Iterator*>(this); }
 };
 
@@ -48,12 +44,9 @@ public:
 	virtual ~Container()  {}
 	virtual unsigned length() const=0;
 
-	virtual T* add(const T& val) //final
-		{ return add(const_cast<T&>(val)); }
 	virtual T* add(T& val)=0;  // Required when copy constructor is not defined
-//	//! \deprecated Replaced with a safe interface in C++ style.
-//	//! Remained only for the compatibility with the original API until the refactoring completion
-//	virtual T* add(const T* val)=0;
+	virtual T* add(const T& val) final
+		{ return add(const_cast<T&>(val)); }
 
 	virtual Iter* find(const T& val)=0;
 	virtual const Iter* find(const T& val) const final
@@ -63,7 +56,7 @@ public:
 	virtual const T& operator[](const T& val) const final
 		{ return **find(val); }
 
-	// Note: const varians should not be made final to allows non-abstract return types
+	// Note: const variants should not be made final to allow specialized return types
 	virtual const Iter* begin() const //final
 		{ return const_cast<Container*>(this)->begin(); }
 	virtual Iter* begin()=0;
@@ -74,12 +67,8 @@ public:
 };
 
 // Stack -----------------------------------------------------------------------
-//template<typename T>
-//class Stack;
-
 template<typename T>
 class StackNode: public Iterator<T> {
-	//friend class Stack<T>;
 	union {
 		T  _val;
 		uint8_t  _empty[sizeof(T)];
@@ -91,6 +80,7 @@ class StackNode: public Iterator<T> {
 public:
 	using value_type = T;
 	using Iter = Iterator<T>;
+	using Iter::operator*;
 
 	// Note: initialization by non-const reference is required when default
 	// copy constructor does not exist
@@ -98,7 +88,6 @@ public:
 		: _val(val), _next(next)  {}
 	StackNode(const T& val, StackNode* next=nullptr)
 		: _val(val), _next(next)  {}
-//		: StackNode(const_cast<T&>(val), next)  {}
 	StackNode(StackNode&&)=default;
 	StackNode(const StackNode&)=default;
 
@@ -107,19 +96,14 @@ public:
 
 	~StackNode()  {}
 
-	//bool operator==(const StackNode& other) const;
-
 	StackNode* next() const override
 		{ return _next; }
+	// Note: operator++() requires std::move for non-pointer data, so next() is used
 	//Iter& operator++() override
 	//	{ assert(_next && "Incrementing end iterator"); return *(this = _next); }
 	//const Iter& operator++(int) override;
-	//Iter& operator--() override;  //!< Postincrement
-	//Iter operator--(int) override;
 
 	T& operator*() override
-		{ return _val; }
-	const T& operator*() const override
 		{ return _val; }
 
 	static StackNode* blank()  //!< Blank (empty) node, which serves as end()
@@ -131,7 +115,10 @@ class Stack: public Container<T> {
 public:
 	using Node = StackNode<T>;
 	using Iter = Iterator<T>;
-	using Container<T>::add;
+	using Cont = Container<T>;
+	using Cont::add;
+	using Cont::find;
+	using Cont::operator[];
 
 	unsigned length() const override  { return _length; }
 
@@ -144,16 +131,12 @@ public:
 	Stack& operator=(const Stack&)=default;
 	~Stack();
 
-	//bool operator==(const Stack& other) const;
-
     //! \brief Add an object to the container
     //! \note The container acquires ownership of the object content
     //!
     //! \param val T&  - an object to be added
     //! \return T*  - acquired object, which holds the ownership of its content
 	T* add(T& val) override;
-//	T* add(const T* val) override
-//		{ return val ? add(*val) : nullptr; }
 
 	Node* find(const T& val) override;
 
@@ -165,12 +148,6 @@ public:
 		{ return const_cast<Node*>(_end); }
 	const Node* end() const override
 		{ return _end; }
-//protected:
-//    //! \brief Fetch node by index
-//    //!
-//    //! \param index int  - index, a negative value is treated as index from the end
-//    //! \return Node*  - resulting node
-//	Node* node(int index) const;
 private:
 	static Node* _end;
 	Node* _root;
@@ -198,15 +175,6 @@ typename Stack<T>::Node* Stack<T>::_end = Stack<T>::Node::blank();
 // Hashmap ---------------------------------------------------------------------
 
 // Stack -----------------------------------------------------------------------
-//template<typename T>
-//const Iterator<T>& StackNode<T>::operator++(int)
-//{
-//	StackNode<T>* cur = this;
-//	assert(_next && "Incrementing end iterator");
-//	this = _next;
-//	return *cur;
-//}
-
 template<typename T>
 Stack<T>::~Stack()
 {
@@ -216,25 +184,7 @@ Stack<T>::~Stack()
 		cur = cur->next();
 		delete old;
 	}
-//	Iter* cur = begin();
-//	while(cur != end()) {
-//		Iter* old = cur;
-//		cur = cur->next();
-//		delete old;
-//	}
 }
-
-//template<typename T>
-//StackNode<T>* Stack<T>::node(int index) const
-//{
-//	StackNode<T>* cur = _root;
-//
-//	if(index < 0)
-//		index += _length;
-//	while (index-- && cur)
-//	  cur = cur->next;
-//	return cur;
-//}
 
 template<typename T>
 T* Stack<T>::add(T& val)

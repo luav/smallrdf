@@ -16,8 +16,6 @@ class NTriplesParser {
 	const uint8_t* _cur;
 	const uint8_t* _end;
 public:
-//	const Document* document;
-
 	//! \brief Parse input, extending provided RDF document
 	//!
 	//! \param input const String&  - input to be parsed

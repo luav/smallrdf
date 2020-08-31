@@ -48,7 +48,7 @@ String::String(const uint8_t* buf, size_t size)
 }
 
 #ifdef ARDUINO
-String::String(String str, bool copy)
+String::String(const AString& str, bool copy)
 	: String(str.c_str())
 {
 	if (copy) {
@@ -61,13 +61,6 @@ String::String(String str, bool copy)
 }
 #endif  // ARDUINO
 
-//String::String(const String& other)
-//	: _data(other._data),
-//	  _size(other._size),
-//	  _allocated(false)
-//{
-//}
-//
 String::String(String& other)
 	: _data(other._data),
 	  _size(other._size),
@@ -172,15 +165,6 @@ bool String::operator==(const String& other) const
 	return !memcmp(_data, other._data, _size);
 }
 
-//bool String::equals(const String* other) const
-//{
-//	if (this == other)
-//		return true;
-//	else if (!other)
-//		return false;
-//	return equals(*other);
-//}
-
 Term::Term(TermKind tkind, const String& tval)
 	: kind(tkind), value(&tval)
 {
@@ -266,19 +250,9 @@ const String* Document::string(String& str)
 		str = *found;
 		return found;
 	}
-//	return str.acquire() ? _strings.add(str) : nullptr;
-	return _strings.add(str);
+	// Note: acquire() fails only if memory is insufficient
+	return str.acquire() ? _strings.add(str) : nullptr;
 }
-
-//const String* Document::string(const uint8_t* buf, size_t length)
-//{
-//	const String cur(buf, length);
-//	const String* found = findString(cur);
-//
-//	if (found)
-//		return found;
-//	return _strings.add(cur);
-//}
 
 const NamedNode* Document::namedNode(const String& value)
 {
@@ -320,11 +294,6 @@ const Quad* Document::quad(const Term& subject,
 	return quads.add(Quad(subject, predicate, object, graph));
 }
 
-//Dataset* Document::dataset()
-//{
-//	return _datasets.add(new Dataset());
-//}
-
 const String* Document::findString(const String& newStr) const
 {
 	for(auto pit = _strings.begin(); pit != _strings.end(); pit = pit->next())
@@ -342,18 +311,6 @@ const Term* Document::findTerm(const Term& newTerm) const
 
 	return nullptr;
 }
-
-#ifdef ARDUINO
-const String* Document::string(String str, bool copy)
-{
-	String cur(str, copy);
-	const String* found = findString(cur);
-
-	if (found)
-		return found;
-	return strings.add(cur);
-}
-#endif // ARDUINO
 
 // Implementation of C interface ===============================================
 // String -------------------------------------------------------------------

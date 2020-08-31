@@ -12,8 +12,6 @@ namespace smallrdf {
 
 class NTriplesSerializer {
 	String* _buf;
-//  size_t _length;
-//  uint8_t* _buf;  // char*
 	uint8_t* _cur;
 	uint8_t* _end;
 public:

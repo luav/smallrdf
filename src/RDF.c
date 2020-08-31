@@ -5,7 +5,7 @@
 #include <assert.h>
 #include "RDF.h"
 
-// rdf_string_t -------------------------------------------------------------------
+// rdf_string_t ----------------------------------------------------------------
 rdf_string_t* rdf_string_create(const uint8_t* restrict data, size_t size)
 {
 	rdf_string_t *rstr = malloc(sizeof(rdf_string_t));
@@ -51,7 +51,7 @@ bool rdf_string_equals(const rdf_string_t* self, const rdf_string_t* other)
 	return !memcmp(self->data, other->data, self->size);
 }
 
-// rdf_term_t ---------------------------------------------------------------------
+// rdf_term_t ------------------------------------------------------------------
 rdf_term_t* rdf_term_create(const rdf_termkind_t termType, const rdf_string_t* value)
 {
 	assert(0 && "Not implemented");
@@ -69,7 +69,7 @@ bool rdf_term_equals(const rdf_term_t* self, const rdf_term_t* other)
 	return false;
 }
 
-// rdf_namednode_t ----------------------------------------------------------------
+// rdf_namednode_t -------------------------------------------------------------
 rdf_namednode_t* rdf_namednode_create(const rdf_string_t* value)
 {
 	assert(0 && "Not implemented");
@@ -81,7 +81,7 @@ void rdf_namednode_release(rdf_namednode_t* self)
 	assert(0 && "Not implemented");
 }
 
-// rdf_literal_t ------------------------------------------------------------------
+// rdf_literal_t ---------------------------------------------------------------
 rdf_literal_t* rdf_literal_create_simple(const rdf_string_t* value)
 {
 	assert(0 && "Not implemented");
@@ -106,7 +106,7 @@ bool rdf_literal_equals(const rdf_term_t* self, const rdf_term_t* other)
 	return false;
 }
 
-// rdf_blanknode_t ----------------------------------------------------------------
+// rdf_blanknode_t -------------------------------------------------------------
 rdf_blanknode_t* rdf_blanknode_create(const rdf_string_t* value)
 {
 	assert(0 && "Not implemented");
@@ -118,7 +118,7 @@ void rdf_blanknode_release(rdf_blanknode_t* self)
 	assert(0 && "Not implemented");
 }
 
-// rdf_quad_t ---------------------------------------------------------------------
+// rdf_quad_t ------------------------------------------------------------------
 rdf_quad_t* rdf_quad_create(const rdf_term_t* subject, const rdf_term_t* predicate,
 	const rdf_term_t* object, const rdf_term_t* graph)
 {
@@ -144,7 +144,7 @@ bool rdf_quad_match(const rdf_quad_t* self, const rdf_term_t* subject,
 	return false;
 }
 
-// rdf_dataset_t ------------------------------------------------------------------
+// rdf_dataset_t ---------------------------------------------------------------
 rdf_dataset_t* rdf_dataset_create()
 {
 	assert(0 && "Not implemented");
@@ -182,7 +182,7 @@ rdf_dataset_t* rdf_dataset_match(const rdf_dataset_t* self, const rdf_term_t* su
 	return NULL;
 }
 
-// rdf_document_t -----------------------------------------------------------------
+// rdf_document_t --------------------------------------------------------------
 rdf_document_t* rdf_document_create()
 {
 	assert(0 && "Not implemented");

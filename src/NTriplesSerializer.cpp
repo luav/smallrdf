@@ -30,18 +30,11 @@ NTriplesSerializer::NTriplesSerializer(String*& storage)
 	  _cur(_buf->data() + _buf->length()),
 	  _end(_buf->data() + _buf->length())
 {
-//	_buf.swap(storage)
-//	_end = _cur = _buf.data() + _buf.length();
 	storage = nullptr;  // Invalidate the pointer to insure self-sufficiency of the internal data
 }
 
 NTriplesSerializer::~NTriplesSerializer()
 {
-//  if(_buf) {
-//    _length = 0;
-//    delete _buf;
-//    _end = _cur = _buf = nullptr;
-//  }
 	_end = _cur = nullptr;
 	if(_buf)
 		delete _buf;
@@ -64,8 +57,6 @@ String& NTriplesSerializer::storage()
 
 String& NTriplesSerializer::serialize(const Dataset& dataset)
 {
-//  _length = datasetSize(dataset) + 1;  // Reserve for the terminating NULL
-//  _buf = _cur = new char[_length];
 	assert(_buf && "Internal buffer should be initialized");
 	size_t dsize = datasetSize(dataset);
 	size_t offs = 0;
