@@ -1,137 +1,278 @@
 //! C++ interface of the Small  library
 //! \author Copyright 2016 Thomas Bergwinkl. All Rights Reserved.
-//!         (c) 2020 Artem Lutov
+//!		 (c) 2020 Artem Lutov
 
 #ifndef _HPP_
 #define _HPP_
 
-#include  <stdexcept>
 #if defined(ARDUINO)
 #include <Arduino.h>
 #endif
 
+#include "Container.hpp"
 #include "RDF.h"
+
 
 namespace smallrdf {
 
-using std::logic_error;  // Not Implemented exception
-
 // Implementation of C++ interface =============================================
 class String {
- public:
-  String();
-  explicit String(const char* cstr); //!< Acquire the string poiner
+public:
+    //! \brief Become a view for the cstr
+    //!
+    //! \param cstr const char*  - original string that holds the data ownership
+	explicit String(const char* cstr);
 
-  //! \brief Create String from the provided buffer
-  //! The string is allocated if the buffer if is not null-terminated, otherwise the buffer pointer is acquired
-  //!
-  //! \param buf const uint8_t*  - buffer, which may not have the null-terminator
-  //! \param length const size_t  - size of the buffer
-  String(const uint8_t* buf, const size_t length);
+    //! \brief Create an empty string of the specified size (including the null-terminator)
+    //!
+	//! \param size size_t  - size of the buffer
+	String(size_t size=0);
+	//! \brief Create String from the provided buffer
+	//! The string is allocated if the buffer if is not null-terminated,
+	//! otherwise the buffer pointer is used
+	//! \note The buffer pointer should not be acquired because its allocation type
+	//! (new vs memalloc) is unknown
+	//!
+	//! \param buf const uint8_t*  - buffer, which may not have the null-terminator
+	//! \param size size_t  - size of the buffer
+//	//! \param acquire=false bool  - attempt to acquire the buffer
+	String(const uint8_t* buf, size_t size);
 #ifdef ARDUINO
-  explicit String(String str, bool copy = false);
+	explicit String(String str, bool copy = false);
 #endif // ARDUINO
-  virtual ~String();
 
-  const char* c_str() const  { return _data; };
-  const uint8_t* data() const  { return reinterpret_cast<const uint8_t*>(_data); };
-  //! \deprecated Replaced with standard-compliant data(). Remained only for the compatibility with the original API until the refactoring completion
-  const uint8_t* buffer() const  { return reinterpret_cast<const uint8_t*>(_data); };
-  const size_t length() const  { return _size ? _size-1 : 0; }  //!< String length without the null-terminator
-  bool equals(const String& other) const;
-  bool equals(const String* other) const;
+    //! \brief Acquire the string
+    //!
+    //! \param other String&&  - original string being acquired
+	String(String&& other)=default;
+//    //! \brief Become a view for the string
+//    //!
+//    //! \param other const String&  - original string that holds the data ownership
+//	String(const String& other)=delete;
+    //! \brief Acquire ownership of data, making other a view
+    //!
+    //! \param other const String&  - original string could hold an ownership and becomes a view
+	String(String& other);
 
- private:
-  const char* _data;  //!< String content
-  size_t  _size;  //!<  Size in bytes including the null-terminator
-  bool _allocated;  //!< The string data were allocated rather than acquierd
+    //! \brief Acquire the string
+    //!
+    //! \param other String&&  - original string being acquired
+    //! \return String&  - resulting string
+	String& operator=(String&& other);
+    //! \brief Become a view for the string
+    //! \attention The former content is released, which may cause dangling references to released memory
+    //!
+    //! \param other const String&  - original string that holds the data ownership
+    //! \return String&  - resulting string view
+	String& operator=(const String& other);
+
+	~String();
+	void clear();  //!< Clear string content, deallocating data when necessary
+    //! \brief Swap the string content, including the data ownership
+    //! \attention Not tread-safe
+    //!
+    //! \param other String&  - swapoing string
+    //! \return void
+
+	void swap(String& other);
+    //! \brief Resize the string
+    //! \note A string view is always transformed to the string
+    //!
+    //! \param length size_t  - required length (excluding the null-terminator)
+    //! \return bool  - whether resized successfully, otherwise the original content is retained
+
+	bool resize(size_t length);
+    //! \brief Acquire ownership of the content, transforming view to the string
+    //! \note Does nothing if the content is already owned
+    //!
+    //! \return bool  - whether the ownership is acquired or there is insufficient memory for that
+	bool acquire()
+		{ return _allocated ? true : resize(length()); }
+    //! \brief Release the string, transferring the ownership,
+    //! 	and becoming a view to the resulting string
+    //! \note A string view is always transformed to the string
+    //!
+    //! \return String*  - resulting allocated string; nullptr if the allocation is not possible
+	String* release();
+
+    //! \brief Extend the string with another one
+    //! \note A string view is transformed to the string
+    //!
+    //! \param other const String&  - another string to be appended
+    //! \return String&  - resulting string
+	String& operator+=(const String& other);
+
+	//void acquire(const uint8_t* buf, size_t length);
+
+	const char* c_str() const
+		{ return reinterpret_cast<const char*>(_data); };
+	char* c_str()
+		{ return reinterpret_cast<char*>(_data); };
+	const uint8_t* data() const
+		{ return _data; };
+	uint8_t* data()
+		{ return _data; };
+//	//! \deprecated Replaced with standard-compliant data(). Remained only for
+//	//! the compatibility with the original API until the refactoring completion
+//	const uint8_t* buffer() const
+//		{ return reinterpret_cast<const uint8_t*>(_data); };
+	//! \brief String length without the null-terminator
+	size_t length() const
+		{ return _size ? _size-1 : 0; }
+	bool operator==(const String& other) const;
+	bool operator!=(const String& other) const
+		{ return !operator==(other); }
+//	//! \deprecated Replaced with standard-compliant operator==. Remained only for
+//	//! the compatibility with the original API until the refactoring completion
+//	bool equals(const String& other) const
+//		{ return operator==(other); }
+//	//! \deprecated Replaced with standard-compliant operator==. Remained only for
+//	//! the compatibility with the original API until the refactoring completion
+//	bool equals(const String* other) const;
+
+	bool allocated() const
+		{ return _allocated; }
+private:
+	uint8_t* _data;  //!< String content
+	size_t  _size;  //!<  Size in bytes including the null-terminator
+	bool _allocated;  //!< The string data were allocated rather than acquierd
 };
 
 class Term {
- public:
-  const TermType termType;
-  const String* value;
+public:
+	const TermKind kind;
+	const String* value;  // Note: Always dereferencable value
 
-  Term(const TermType termType, const String* value);
-  virtual ~Term() {}
+	// Note: pass a value by reference to ensure that it is not a nullptr
+	Term(TermKind tkind, const String& tval);
+	Term(Term&&)=default;
+	//! \brief Copy constructor
+	//! \note Is used because the object does not hold the ownership of its members,
+	//! 	allowing to copy their pointers
+	Term(const Term&)=default;
 
-  virtual bool equals(const Term* other) const;
+	Term& operator=(Term&&)=default;
+	Term& operator=(const Term&)=default;
+	virtual ~Term() {}
+
+	virtual bool operator==(const Term& other) const
+		{ return kind == other.kind && *value == *other.value; }
+	virtual bool operator!=(const Term& other) const final
+		{ return !operator==(other); }
+//	//! \deprecated Replaced with standard-compliant operator==. Remained only for
+//	//! the compatibility with the original API until the refactoring completion
+//	virtual bool equals(const Term* other) const final
+//		{ return other && (this == other || operator==(*other)); }
 };
 
-class NamedNode : public Term {
- public:
-  explicit NamedNode(const String* value);
+class NamedNode: public Term {
+public:
+	explicit NamedNode(const String& value);
+	NamedNode(NamedNode&&)=default;
+	//! \brief Copy constructor
+	//! \note Is used because the object does not hold the ownership of its members,
+	//! 	allowing to copy their pointers
+	NamedNode(const NamedNode&)=default;
+
+	NamedNode& operator=(NamedNode&&)=default;
+	NamedNode& operator=(const NamedNode&)=default;
 };
 
-class Literal : public Term {
- public:
-  const String* language;
-  const String* datatype;
+class Literal: public Term {
+public:
+	const String* lang;
+	const String* dtype;
 
-  Literal(const String* value, const String* language = nullptr,
-             const String* datatype = nullptr);
+	Literal(const String& value, const String* lang=nullptr,
+			const String* dtype=nullptr);
+	Literal(Literal&&)=default;
+	//! \brief Copy constructor
+	//! \note Is used because the object does not hold the ownership of its members,
+	//! 	allowing to copy their pointers
+	Literal(const Literal&)=default;
 
-  virtual bool equals(const Term* other) const;
+	Literal& operator=(Literal&&)=default;
+	Literal& operator=(const Literal&)=default;
+
+	bool operator==(const Term& other) const override;
 };
 
-class BlankNode : public Term {
- public:
-  explicit BlankNode(const String* value);
+class BlankNode: public Term {
+public:
+	explicit BlankNode(const String& value);
+	BlankNode(BlankNode&&)=default;
+	//! \brief Copy constructor
+	//! \note Is used because the object does not hold the ownership of its members,
+	//! 	allowing to copy their pointers
+	BlankNode(const BlankNode&)=default;
+
+	BlankNode& operator=(BlankNode&&)=default;
+	BlankNode& operator=(const BlankNode&)=default;
 };
 
+//! \brief A quad, which does not owns its members
 class Quad {
- public:
-  const Term* subject;
-  const Term* predicate;
-  const Term* object;
-  const Term* graph;
+public:
+	const Term* subject;
+	const Term* predicate;
+	const Term* object;
+	const Term* graph;
 
-  Quad(const Term* subject, const Term* predicate,
-          const Term* object, const Term* graph = nullptr);
+	// Note: pass some parameters by reference to ensure that each Quad is a valid triple
+	Quad(const Term& subject, const Term& predicate,
+		const Term& object, const Term* graph = nullptr);
+	Quad(Quad&&)=default;
+	//! \brief Copy constructor
+	//! \note Is used because the object does not hold the ownership of its members,
+	//! 	allowing to copy their pointers
+	Quad(const Quad&)=default;
 
-  const bool match(const Term* subject, const Term* predicate = nullptr,
-                   const Term* object = nullptr, const Term* graph = nullptr) const;
+	Quad& operator=(Quad&&)=default;
+	Quad& operator=(const Quad&)=default;
+
+	bool operator==(const Quad& other) const;
+	bool operator!=(const Quad& other) const
+		{ return !operator==(other); }
+	bool match(const Term* subject = nullptr, const Term* predicate = nullptr,
+				const Term* object = nullptr, const Term* graph = nullptr) const;
 };
 
+//! \brief Main interface for the Quad/Triplesotre
 class Dataset {
- public:
-  List<const Quad*> quads;
+public:
+	using Quads = Stack<Quad>;
 
-  virtual ~Dataset();
+	Quads quads;  //!< Actual Quad/Triplestore
 
-  const Quad* find(const Term* subject, const Term* predicate = nullptr,
-                const Term* object = nullptr, const Term* graph = nullptr);
-  Dataset* match(const Term* subject, const Term* predicate = nullptr,
-                    const Term* object = nullptr, const Term* graph = nullptr);
+	virtual ~Dataset()  {}
 
- protected:
-  List<Dataset*> _datasets;
+	Quad* find(const Quad& quad);
+	Quads match(const Term* subject = nullptr, const Term* predicate = nullptr,
+				const Term* object = nullptr, const Term* graph = nullptr);
 };
 
-class Document : public Dataset {
- public:
-  virtual ~Document();
-
-  const String* string(const char* buf);
-  const String* string(const uint8_t* buf, const size_t length);
-  const NamedNode* namedNode(const String* value);
-  const Literal* literal(const String* value, const String* language = nullptr,
-                            const String* datatype = nullptr);
-  const BlankNode* blankNode(const String* value);
-  const Quad* triple(const Term* subject, const Term* predicate,
-                      const Term* object, const Term* graph = nullptr);
-  Dataset* dataset();
-
-#if defined(ARDUINO)
-  const String* string(String str, bool copy = false);
-#endif
-
- protected:
-  List<String*> _strings;
-  List<Term*> _terms;
-
-  const String* findString(const String* newStr) const;
-  const Term* findTerm(const Term* newTerm) const;
+//! \brief RDF document, which owns all the stored objects, becoming a session memory manager
+class Document: public Dataset {
+	Stack<String> _strings;
+	Stack<Term> _terms;
+public:
+    //! \brief Transfer ownership of the str to the document
+    //!
+    //! \param str String*  - original string/view, becoming a view by transferring
+    //! 	the ownership to the document
+    //! \return const String*  - stored owned sting
+	const String* string(String& str);
+	const String* string(String&& str)
+		{ return string(str); }  // Calls string(String& str);
+	const NamedNode* namedNode(const String& value);
+	const Literal* literal(const String& value, const String* lang=nullptr,
+						   const String* dtyoe=nullptr);
+	const BlankNode* blankNode(const String& value);
+	const Quad* quad(const Term& subject, const Term& predicate,
+					   const Term& object, const Term* graph = nullptr);
+protected:
+	const String* findString(const String& newStr) const;
+	const Term* findTerm(const Term& newTerm) const;
 };
 
 }  // smallrdf

@@ -708,8 +708,8 @@ do {                                                                            
 #endif
 
 #if !defined (get16bits)
-#define get16bits(d) ((((uint32_t)(((const uint8_t *)(d))[1])) << 8)             \
-                       +(uint32_t)(((const uint8_t *)(d))[0]) )
+#define get16bits(d) ((((uint32_t)(((uint8_t *)(d))[1])) << 8)             \
+                       +(uint32_t)(((uint8_t *)(d))[0]) )
 #endif
 #define HASH_SFH(key,keylen,hashv)                                               \
 do {                                                                             \

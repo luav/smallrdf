@@ -2,440 +2,535 @@
 (c) 2020 Artem Lutov
  */
 
-#include <string.h>
+#include <string.h>  // memcpy
+#include <stdlib.h>  // malloc
 #include <assert.h>
 #include "RDF.hpp"
 
 using namespace smallrdf;
 
 
-String::String()
-: String(nullptr) {
+String::String(const char* cstr)
+	: _data(reinterpret_cast<decltype(_data)>(const_cast<char*>(cstr))),
+	  _size(_data ? strlen(cstr) + 1 : 0),
+	  _allocated(false)
+{
 }
 
-String::String(const char* buf)
-: _data(buf),
-  _size(buf ? strlen(buf) + 1 : 0),
-  _allocated(false) {
+String::String(size_t size)
+	: _data(size ? static_cast<decltype(_data)>(malloc(size)) : nullptr),
+	  _size(_data ? size : 0),
+	  _allocated(_data)
+{
+	if(_size) {
+		_data[0] = 0;
+		_data[_size-1] = 0;
+	}
 }
 
 String::String(const uint8_t* buf, size_t size)
-: _data(reinterpret_cast<const char*>(buf)),
-  _size(size),
-  _allocated(false) {
-  // Ensure that the data is null-terminated
-  if (_data && _size && _data[_size-1] != 0) {
-    //char** writable_data = const_cast<char**>(&this->_data);
-    //writable_data = new char[_size];
-    _data = new const char[++_size]{0};
-    _allocated = true;
-    memcpy(const_cast<char*>(_data), buf, _size-1);
-  }
-  assert((!_data || _size >= strlen(_data) + 1) && "Invalid size of the data");
+	: _data(const_cast<decltype(_data)>(buf)),
+	  _size(size),
+	  _allocated(false)
+{
+	// Ensure that the data is null-terminated
+	if (_data && _size && _data[_size-1] != 0) {
+		//char** writable_data = const_cast<char**>(&this->_data);
+		//writable_data = new char[_size]{0};
+		_data = static_cast<decltype(_data)>(malloc(++_size));
+		if(_data) {
+			_allocated = true;
+			_data[_size-1] = 0;
+			memcpy(_data, buf, _size-1);
+		} else _size = 0;
+	}
+	assert((!_data || _size >= strlen(c_str()) + 1) && "Invalid size of the data");
 }
 
 #ifdef ARDUINO
 String::String(String str, bool copy)
-: String(str.c_str())
- {
-  if (copy) {
-    _data = new const char[_size]{0};
-    memcpy(const_cast<char*>(_data), str.c_str(), _size-1);
-    _allocated = true;
-  }
+	: String(str.c_str())
+{
+	if (copy) {
+		_data = static_cast<decltype(_data)>(malloc(_size));
+		if(_data) {
+			_allocated = true;
+			memcpy(_data, str.c_str(), _size);
+		} else _size = 0;
+	}
 }
 #endif  // ARDUINO
 
-String::~String() {
-  if (_allocated && _data) {
-    _allocated = false;
-    delete[] _data;
-  }
+//String::String(const String& other)
+//	: _data(other._data),
+//	  _size(other._size),
+//	  _allocated(false)
+//{
+//}
+//
+String::String(String& other)
+	: _data(other._data),
+	  _size(other._size),
+	  _allocated(other._allocated)
+{
+	other._allocated = false;
 }
 
-bool String::equals(const String& other) const {
-  if (_size != other._size || !_data ^ !other._data)
-    return false;
-  return !memcmp(_data, other._data, _size);
+String& String::operator=(String&& other)
+{
+	if(_allocated)
+		clear();
+	_data = other._data;
+	_size = other._size;
+	_allocated = other._allocated;
+	other._allocated = false;
+	return *this;
 }
 
-bool String::equals(const String* other) const {
-  if (this == other)
-    return true;
-  else if (!other)
-    return false;
-  return equals(*other);
+String& String::operator=(const String& other)
+{
+	if(_allocated)
+		clear();
+	_data = other._data;
+	_size = other._size;
+	return *this;
 }
 
-Term::Term(const TermType termType, const String* value)
-: termType(termType),
-  value(value) {
+String::~String()
+{
+	clear();
 }
 
-bool Term::equals(const Term* other) const {
-  if (this == other) {
-    return true;
-  }
-
-  return termType == other->termType && value->equals(other->value);
+void String::clear()
+{
+	if (_allocated && _data)
+		free(_data);
+	_data = nullptr;
+	_size = 0;
+	_allocated = false;
 }
 
-NamedNode::NamedNode(const String* value)
-: Term(RTT_NAMED_NODE, value) {
+void String::swap(String& other)
+{
+	auto data = _data;
+	_data = other._data;
+	other._data = data;
+
+	auto size = _size;
+	_size = other._size;
+	other._size = size;
+
+	auto allocated = _allocated;
+	_allocated = other._allocated;
+	other._allocated = allocated;
 }
 
-Literal::Literal(const String* value, const String* language,
-                       const String* datatype)
-: Term(RTT_LITERAL, value),
-  language(language),
-  datatype(datatype) {
+bool String::resize(size_t length)
+{
+	void *ndt;
+	if(!_allocated) {
+		ndt = malloc(length + 1);
+		if(ndt && _size)
+			memcpy(ndt, _data, length < _size ? length : _size);
+	} else ndt = realloc(_data, length + 1);
+	if(ndt) {
+		_data = static_cast<decltype(_data)>(ndt);
+		_data[length] = 0;
+		_size = length + 1;
+		_allocated = true;
+	}
+	return ndt;
 }
 
-bool Literal::equals(const Term* other) const {
-  if (this == other) {
-    return true;
-  }
-
-  if (other->termType != RTT_LITERAL) {
-    return false;
-  }
-
-  const Literal* otherLiteral = reinterpret_cast<const Literal*>(other);
-
-  return value->equals(otherLiteral->value)
-      && language->equals(otherLiteral->language)
-      && datatype->equals(otherLiteral->datatype);
+String* String::release()
+{
+	if(!_allocated && !resize(length()))
+		return nullptr;
+	_allocated = true;
+	String* res = new String(*this);
+	if(res) {
+		delete res;
+		return nullptr;
+	}
+	res->_allocated = _allocated;
+	_allocated = false;
+	return res;
 }
 
-BlankNode::BlankNode(const String* value)
-: Term(RTT_BLANK_NODE, value) {
+String& String::operator+=(const String& other)
+{
+	size_t offs = length();
+	if(resize(length() + other.length()))
+		memcpy(_data + offs, other._data, other.length() + 1);  // Copy also the null-terminator
+	return *this;
 }
 
-Quad::Quad(const Term* subject, const Term* predicate,
-                 const Term* object, const Term* graph)
-: subject(subject),
-  predicate(predicate),
-  object(object),
-  graph(graph) {
+bool String::operator==(const String& other) const
+{
+	if (_size != other._size || !_data ^ !other._data)
+		return false;
+	return !memcmp(_data, other._data, _size);
 }
 
-const bool Quad::match(const Term* subject, const Term* predicate,
-                          const Term* object, const Term* graph) const {
-  if (subject && !this->subject->equals(subject)) {
-    return false;
-  }
+//bool String::equals(const String* other) const
+//{
+//	if (this == other)
+//		return true;
+//	else if (!other)
+//		return false;
+//	return equals(*other);
+//}
 
-  if (predicate && !this->predicate->equals(predicate)) {
-    return false;
-  }
-
-  if (object && !this->object->equals(object)) {
-    return false;
-  }
-
-  if (graph && (!this->graph || !this->graph->equals(graph))) {
-    return false;
-  }
-
-  return true;
+Term::Term(TermKind tkind, const String& tval)
+	: kind(tkind), value(&tval)
+{
+	//assert(val.allocated() && "Non-allocated values may cause memory leaks");
 }
 
-Dataset::~Dataset() {
-  for (int i = 0; i < _datasets.length(); ++i)
-    delete _datasets.get(i);
+NamedNode::NamedNode(const String& val)
+	: Term(RTK_NAMED_NODE, val)
+{
 }
 
-const Quad* Dataset::find(const Term* subject,
-                                const Term* predicate, const Term* object,
-                                const Term* graph) {
-  for (int i = 0; i < quads.length(); i++) {
-    const Quad* quad = quads.get(i);
-
-    if (quad->match(subject, predicate, object, graph))
-      return quad;
-  }
-
-  return NULL;
+Literal::Literal(const String& val, const String* lang, const String* dtype)
+	: Term(RTK_LITERAL, val),
+	  lang(lang),
+	  dtype(dtype)
+{
 }
 
-Dataset* Dataset::match(const Term* subject, const Term* predicate,
-                              const Term* object, const Term* graph) {
-  Dataset* matches = _datasets.add(new Dataset());
-
-  for (int i = 0; i < quads.length(); i++) {
-    const Quad* quad = quads.get(i);
-
-    if (quad->match(subject, predicate, object, graph))
-      matches->quads.add(quad);
-  }
-
-  return matches;
+bool Literal::operator==(const Term& other) const
+{
+	if(!Term::operator==(other))
+		return false;
+	const Literal& olit = reinterpret_cast<const Literal&>(other);
+	return (lang == olit.lang || (lang && olit.lang && *lang == *olit.lang))
+		&& (dtype == olit.dtype || (dtype && olit.dtype && *dtype == *olit.dtype));
 }
 
-Document::~Document() {
-  for (int i = 0; i < quads.length(); i++)
-    delete quads.get(i);
-
-  for (int i = 0; i < _terms.length(); i++)
-    delete _terms.get(i);
-
-  for (int i = 0; i < _strings.length(); i++)
-    delete _strings.get(i);
+BlankNode::BlankNode(const String& val)
+	: Term(RTK_BLANK_NODE, val)
+{
 }
 
-const String* Document::string(const char* buf) {
-  const String cur(buf);
-  const String* found = findString(&cur);
-
-  if (found != 0) {
-    return found;
-  }
-
-  return reinterpret_cast<String*>(_strings.add(new String(buf)));
+Quad::Quad(const Term& subject, const Term& predicate,
+           const Term& object, const Term* graph)
+	: subject(&subject),
+	  predicate(&predicate),
+	  object(&object),
+	  graph(graph)
+{
 }
 
-const String* Document::string(const uint8_t* buf, const size_t length) {
-  const String cur(buf, length);
-  const String* found = findString(&cur);
-
-  if (found != 0) {
-    return found;
-  }
-
-  return reinterpret_cast<String*>(_strings.add(new String(buf, length)));
+bool Quad::operator==(const Quad& other) const
+{
+	return (subject == other.subject || *subject == *other.subject)
+		&& (predicate == other.predicate || *predicate == *other.predicate)
+		&& (object == other.object || *object == *other.object)
+		// Note: only the graph might be not defined in a quad
+		&& (graph == other.graph || (graph && other.graph && *graph == *other.graph));
 }
 
-const NamedNode* Document::namedNode(const String* value) {
-  const NamedNode cur(value);
-  const Term* found = findTerm(&cur);
-
-  if (found != 0) {
-    return reinterpret_cast<const NamedNode*>(found);
-  }
-
-  return reinterpret_cast<const NamedNode*>(_terms.add(
-      new NamedNode(value)));
+bool Quad::match(const Term* subj, const Term* pred, const Term* obj, const Term* gr) const
+{
+	return (!subj || subject == subj || *subject == *subj)
+		&& (!pred || predicate == pred || *predicate == *pred)
+		&& (!obj || object == obj || *object == *obj)
+		// Note: only the graph might be not defined in a quad
+		&& (!gr || graph == gr || (graph && *graph == *gr));
 }
 
-const Literal* Document::literal(const String* value,
-                                       const String* language,
-                                       const String* datatype) {
-  const Literal cur(value, language, datatype);
-  const Term* found = findTerm(&cur);
-
-  if (found != 0) {
-    return reinterpret_cast<const Literal*>(found);
-  }
-
-  return reinterpret_cast<const Literal*>(_terms.add(
-      new Literal(value, language, datatype)));
+Quad* Dataset::find(const Quad& quad)
+{
+	for(auto pit = quads.begin(); pit != quads.end(); pit = pit->next())
+		if ((**pit).match(quad.subject, quad.predicate, quad.object, quad.graph))
+			return &**pit;
+	return nullptr;
 }
 
-const BlankNode* Document::blankNode(const String* value) {
-  const BlankNode cur(value);
-  const Term* found = findTerm(&cur);
+Dataset::Quads Dataset::match(const Term* subject, const Term* predicate,
+                        const Term* object, const Term* graph)
+{
+	Quads matches;
+	for(auto pit = quads.begin(); pit != quads.end(); pit = pit->next())
+		if((**pit).match(subject, predicate, object, graph))
+			matches.add(**pit);
 
-  if (found != 0) {
-    return reinterpret_cast<const BlankNode*>(found);
-  }
-
-  return reinterpret_cast<const BlankNode*>(_terms.add(
-      new BlankNode(value)));
+	return matches;  // Note: Return value optimization is used here
 }
 
-const Quad* Document::triple(const Term* subject,
-                                   const Term* predicate,
-                                   const Term* object,
-                                   const Term* graph) {
-  return quads.add(new Quad(subject, predicate, object, graph));
+const String* Document::string(String& str)
+{
+	const String* found = findString(str);
+	if (found) {
+		str = *found;
+		return found;
+	}
+//	return str.acquire() ? _strings.add(str) : nullptr;
+	return _strings.add(str);
 }
 
-Dataset* Document::dataset() {
-  return _datasets.add(new Dataset());
+//const String* Document::string(const uint8_t* buf, size_t length)
+//{
+//	const String cur(buf, length);
+//	const String* found = findString(cur);
+//
+//	if (found)
+//		return found;
+//	return _strings.add(cur);
+//}
+
+const NamedNode* Document::namedNode(const String& value)
+{
+	const NamedNode cur(value);
+	const Term* found = findTerm(cur);
+
+	if (found)
+		return reinterpret_cast<const NamedNode*>(found);
+	return reinterpret_cast<const NamedNode*>(_terms.add(cur));
 }
 
-const String* Document::findString(const String* newStr) const {
-  for (int i = 0; i < _strings.length(); i++) {
-    String* cur = _strings.get(i);
+const Literal* Document::literal(const String& value,
+                                 const String* language,
+                                 const String* datatype)
+{
+	const Literal cur(value, language, datatype);
+	const Term* found = findTerm(cur);
 
-    if (cur->equals(newStr))
-      return cur;
-  }
-
-  return NULL;
+	if (found)
+		return reinterpret_cast<const Literal*>(found);
+	return reinterpret_cast<const Literal*>(_terms.add(cur));
 }
 
-const Term* Document::findTerm(const Term* newTerm) const {
-  for (int i = 0; i < _terms.length(); i++) {
-    Term* cur = _terms.get(i);
+const BlankNode* Document::blankNode(const String& value)
+{
+	const BlankNode cur(value);
+	const Term* found = findTerm(cur);
 
-    if (cur->equals(newTerm))
-      return cur;
-  }
+	if (found)
+		return reinterpret_cast<const BlankNode*>(found);
+	return reinterpret_cast<const BlankNode*>(_terms.add(cur));
+}
 
-  return NULL;
+const Quad* Document::quad(const Term& subject,
+                             const Term& predicate,
+                             const Term& object,
+                             const Term* graph)
+{
+	return quads.add(Quad(subject, predicate, object, graph));
+}
+
+//Dataset* Document::dataset()
+//{
+//	return _datasets.add(new Dataset());
+//}
+
+const String* Document::findString(const String& newStr) const
+{
+	for(auto pit = _strings.begin(); pit != _strings.end(); pit = pit->next())
+		if (**pit == newStr)
+			return &**pit;
+
+	return nullptr;
+}
+
+const Term* Document::findTerm(const Term& newTerm) const
+{
+	for(auto pit = _terms.begin(); pit != _terms.end(); pit = pit->next())
+		if (**pit == newTerm)
+			return &**pit;
+
+	return nullptr;
 }
 
 #ifdef ARDUINO
-const String* Document::string(String str, bool copy) {
-  const String cur(str, copy);
-  const String* found = findString(&cur);
+const String* Document::string(String str, bool copy)
+{
+	String cur(str, copy);
+	const String* found = findString(cur);
 
-  if (found != 0) {
-    return found;
-  }
-
-  return reinterpret_cast<String*>(_strings.add(new String(str, copy)));
+	if (found)
+		return found;
+	return strings.add(cur);
 }
 #endif // ARDUINO
 
 // Implementation of C interface ===============================================
 // String -------------------------------------------------------------------
-String* rdf_string_create(const uint8_t* data, const size_t size) {
-  throw logic_error("Not implemented");
-  return nullptr;
+String* rdf_string_create(const uint8_t* data, size_t size)
+{
+	assert(0 && "Not implemented");
+	return nullptr;
 }
 
-String* rdf_string_create_cstr(const char* str) {
-  throw logic_error("Not implemented");
-  return nullptr;
+String* rdf_string_create_cstr(const char* str)
+{
+	assert(0 && "Not implemented");
+	return nullptr;
 }
 
-void rdf_string_release(String* self) {
-  throw logic_error("Not implemented");
+void rdf_string_release(String* self)
+{
+	assert(0 && "Not implemented");
 }
 
-bool rdf_string_equals(const String* self, const String* other) {
-  throw logic_error("Not implemented");
-  return false;
+bool rdf_string_equals(const String* self, const String* other)
+{
+	assert(0 && "Not implemented");
+	return false;
 }
 
 // Term ---------------------------------------------------------------------
-Term* rdf_term_create(const TermType termType, const String* value) {
-  throw logic_error("Not implemented");
-  return nullptr;
+Term* rdf_term_create(const TermKind termType, const String* value)
+{
+	assert(0 && "Not implemented");
+	return nullptr;
 }
 
-void rdf_term_release(Term* self) {
-  throw logic_error("Not implemented");
+void rdf_term_release(Term* self)
+{
+	assert(0 && "Not implemented");
 }
 
-bool rdf_term_equals(const Term* self, const Term* other) {
-  throw logic_error("Not implemented");
-  return false;
+bool rdf_term_equals(const Term* self, const Term* other)
+{
+	assert(0 && "Not implemented");
+	return false;
 }
 
 // NamedNode ----------------------------------------------------------------
-NamedNode* rdf_namednode_create(const String* value) {
-  throw logic_error("Not implemented");
-  return nullptr;
+NamedNode* rdf_namednode_create(const String* value)
+{
+	assert(0 && "Not implemented");
+	return nullptr;
 }
 
-void rdf_namednode_release(NamedNode* self) {
-  throw logic_error("Not implemented");
+void rdf_namednode_release(NamedNode* self)
+{
+	assert(0 && "Not implemented");
 }
 
 // Literal ------------------------------------------------------------------
-Literal* rdf_literal_create_simple(const String* value) {
-  throw logic_error("Not implemented");
-  return nullptr;
+Literal* rdf_literal_create_simple(const String* value)
+{
+	assert(0 && "Not implemented");
+	return nullptr;
 }
 
 Literal* rdf_literal_create(const String* value, const String* language,
-                              const String* datatype) {
-  throw logic_error("Not implemented");
-  return nullptr;
+                            const String* datatype)
+{
+	assert(0 && "Not implemented");
+	return nullptr;
 }
 
-void rdf_literal_release(Literal* self) {
-  throw logic_error("Not implemented");
+void rdf_literal_release(Literal* self)
+{
+	assert(0 && "Not implemented");
 }
 
-bool rdf_literal_equals(const Term* self, const Term* other) {
-  throw logic_error("Not implemented");
-  return false;
+bool rdf_literal_equals(const Term* self, const Term* other)
+{
+	assert(0 && "Not implemented");
+	return false;
 }
 
 // BlankNode ----------------------------------------------------------------
-BlankNode* rdf_blanknode_create(const String* value) {
-  throw logic_error("Not implemented");
-  return nullptr;
+BlankNode* rdf_blanknode_create(const String* value)
+{
+	assert(0 && "Not implemented");
+	return nullptr;
 }
 
-void rdf_blanknode_release(BlankNode* self) {
-  throw logic_error("Not implemented");
+void rdf_blanknode_release(BlankNode* self)
+{
+	assert(0 && "Not implemented");
 }
 
 // Quad ---------------------------------------------------------------------
 Quad* rdf_quad_create(const Term* subject, const Term* predicate,
-          const Term* object, const Term* graph) {
-  throw logic_error("Not implemented");
-  return nullptr;
+                      const Term* object, const Term* graph)
+{
+	assert(0 && "Not implemented");
+	return nullptr;
 }
 
-void rdf_quad_release(Quad* self) {
-  throw logic_error("Not implemented");
+void rdf_quad_release(Quad* self)
+{
+	assert(0 && "Not implemented");
 }
 
-bool rdf_quad_match_subject(const Quad* self, const Term* subject) {
-  throw logic_error("Not implemented");
-  return false;
+bool rdf_quad_match_subject(const Quad* self, const Term* subject)
+{
+	assert(0 && "Not implemented");
+	return false;
 }
 
 bool rdf_quad_match(const Quad* self, const Term* subject, const Term* predicate,
-                   const Term* object, const Term* graph) {
-  throw logic_error("Not implemented");
-  return false;
+                    const Term* object, const Term* graph)
+{
+	assert(0 && "Not implemented");
+	return false;
 }
 
 // Dataset ------------------------------------------------------------------
-Dataset* rdf_dataset_create() {
-  throw logic_error("Not implemented");
-  return nullptr;
+Dataset* rdf_dataset_create()
+{
+	assert(0 && "Not implemented");
+	return nullptr;
 }
 
-void rdf_dataset_release(Dataset* self) {
-  throw logic_error("Not implemented");
+void rdf_dataset_release(Dataset* self)
+{
+	assert(0 && "Not implemented");
 }
 
-const Quad* rdf_dataset_find_subject(const Dataset* self, const Term* subject) {
-  throw logic_error("Not implemented");
-  return nullptr;
+const Quad* rdf_dataset_find_subject(const Dataset* self, const Term* subject)
+{
+	assert(0 && "Not implemented");
+	return nullptr;
 }
 
 const Quad* rdf_dataset_find(const Dataset* self, const Term* subject,
-                               const Term* predicate, const Term* object, const Term* graph) {
-  throw logic_error("Not implemented");
-  return nullptr;
+                             const Term* predicate, const Term* object, const Term* graph)
+{
+	assert(0 && "Not implemented");
+	return nullptr;
 }
 
-Dataset* rdf_dataset_match_subject(const Dataset* self, const Term* subject) {
-  throw logic_error("Not implemented");
-  return nullptr;
+Dataset* rdf_dataset_match_subject(const Dataset* self, const Term* subject)
+{
+	assert(0 && "Not implemented");
+	return nullptr;
 }
 
 Dataset* rdf_dataset_match(const Dataset* self, const Term* subject, const Term* predicate,
-                             const Term* object, const Term* graph) {
-  throw logic_error("Not implemented");
-  return nullptr;
+                           const Term* object, const Term* graph)
+{
+	assert(0 && "Not implemented");
+	return nullptr;
 }
 
 // Document -----------------------------------------------------------------
-Document* rdf_document_create() {
-  throw logic_error("Not implemented");
-  return nullptr;
+Document* rdf_document_create()
+{
+	assert(0 && "Not implemented");
+	return nullptr;
 }
 
-void rdf_document_release(Document* self) {
-  throw logic_error("Not implemented");
+void rdf_document_release(Document* self)
+{
+	assert(0 && "Not implemented");
 }
 
-const String* rdf_document_rfindString(const Document* self, const String* newStr) {
-  throw logic_error("Not implemented");
-  return nullptr;
+const String* rdf_document_rfindString(const Document* self, const String* newStr)
+{
+	assert(0 && "Not implemented");
+	return nullptr;
 }
 
-const Term* rdf_document_rfindTerm(const Document* self, const Term* newTerm) {
-  throw logic_error("Not implemented");
-  return nullptr;
+const Term* rdf_document_rfindTerm(const Document* self, const Term* newTerm)
+{
+	assert(0 && "Not implemented");
+	return nullptr;
 }

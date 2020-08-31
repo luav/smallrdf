@@ -8,7 +8,7 @@
 // rdf_string_t -------------------------------------------------------------------
 rdf_string_t* rdf_string_create(const uint8_t* restrict data, size_t size)
 {
-	rstr = malloc(sizeof(rdf_string_t));
+	rdf_string_t *rstr = malloc(sizeof(rdf_string_t));
 	rstr->data = data;
 	rstr->size = size;
 	rstr->allocated = false;
@@ -16,18 +16,20 @@ rdf_string_t* rdf_string_create(const uint8_t* restrict data, size_t size)
 	if (data && size && data[size-1] != 0) {
 		rstr->data = malloc(++rstr->size);
 		rstr->allocated = true;
-		rstr->data[size] = 0
+		rstr->data[size] = 0;
 		memcpy(rstr->data, data, size);
 	}
-	assert((!rstr->data || rstr->size >= strlen(rstr->data) + 1) && "Invalid size of the data");
+	assert((!rstr->data || rstr->size >= strlen(rstr->c_str()) + 1) && "Invalid size of the data");
+	return rstr;
 }
 
 rdf_string_t* rdf_string_create_cstr(const char* str)
 {
-	rstr = malloc(sizeof(rdf_string_t));
+	rdf_string_t *rstr = malloc(sizeof(rdf_string_t));
 	rstr->data = str;
-	rstr->size = str ? strlen(buf) + 1 : 0;
+	rstr->size = str ? strlen(str) + 1 : 0;
 	rstr->allocated = false;
+	return rstr;
 }
 
 void rdf_string_release(rdf_string_t* self)
@@ -35,7 +37,7 @@ void rdf_string_release(rdf_string_t* self)
 	if(!self)
 		return;
 	if(self->allocated)
-		free(rstr->data);
+		free(self->data);
 	free(self);
 }
 
@@ -46,11 +48,11 @@ bool rdf_string_equals(const rdf_string_t* self, const rdf_string_t* other)
 	else if(!self || !other || self->size != other->size || !self->data ^ !other->data)
 		return false;
 
-	return !memcmp(self->data, oother->data, self->size);
+	return !memcmp(self->data, other->data, self->size);
 }
 
 // rdf_term_t ---------------------------------------------------------------------
-rdf_term_t* rdf_term_create(const rdf_termtype_t termType, const rdf_string_t* value)
+rdf_term_t* rdf_term_create(const rdf_termkind_t termType, const rdf_string_t* value)
 {
 	assert(0 && "Not implemented");
 	return NULL;

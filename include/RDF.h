@@ -8,15 +8,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "Container.hpp"
-
-
 typedef enum {
-	RTT_NAMED_NODE,
-	RTT_BLANK_NODE,
-	RTT_LITERAL,
-	RTT_VARIABLE
-} rdf_termtype_t;
+	RTK_NAMED_NODE,
+	RTK_BLANK_NODE,
+	RTK_LITERAL,
+	RTK_VARIABLE
+} rdf_termkind_t;
 
 #ifndef __cplusplus
 
@@ -27,20 +24,20 @@ typedef enum {
 } bool;
 
 // Core Types ==================================================================
-typename struct {
-	const char* data;  //!< String content
-	const size_t size;  //!<  Size in bytes including the null-terminator
+typedef struct {
+	char* data;  //!< String content
+	size_t size;  //!<  Size in bytes including the null-terminator
 	bool allocated;  //!< The string data were allocated rather than acquierd
 } rdf_string_t;
 
-typename struct {
-	const rdf_termtype_t termtype;
+typedef struct {
+	const rdf_termkind_t termtype;
 	const rdf_string_t* value;
 } rdf_term_t;
 
 typedef rdf_term_t rdf_namednode_t;
 
-typename struct {
+typedef struct {
 	rdf_term_t;
 	const rdf_string_t* language;
 	const rdf_string_t* datatype;
@@ -48,22 +45,22 @@ typename struct {
 
 typedef rdf_term_t rdf_blanknode_t;
 
-typename struct {
+typedef struct {
 	const rdf_term_t* subject;
 	const rdf_term_t* predicate;
 	const rdf_term_t* object;
 	const rdf_term_t* graph;
 } rdf_quad_t;
 
-typename struct rdf_dataset_t {
-	List<const rdf_quad_t*> quads;
-	List<struct rdf_dataset_t*> datasets;
+typedef struct rdf_dataset_t {
+//	Stack<const rdf_quad_t*> quads;
+//	Stack<struct rdf_dataset_t*> datasets;
 } rdf_dataset_t;
 
-typename struct {
+typedef struct {
 	rdf_dataset_t;
-	List<rdf_string_t*> strings;
-	List<rdf_term_t*> terms;
+//	Stack<rdf_string_t*> strings;
+//	Stack<rdf_term_t*> terms;
 } rdf_document_t;
 
 #else // __cplusplus
@@ -73,7 +70,7 @@ typename struct {
 
 namespace smallrdf {
 
-using TermType = rdf_termtype_t;
+using TermKind = rdf_termkind_t;
 
 class String;
 class Term;
@@ -106,7 +103,7 @@ void rdf_string_release(rdf_string_t* self);
 bool rdf_string_equals(const rdf_string_t* self, const rdf_string_t* other);
 
 // rdf_term_t ---------------------------------------------------------------------
-rdf_term_t* rdf_term_create(const rdf_termtype_t termType, const rdf_string_t* value);
+rdf_term_t* rdf_term_create(const rdf_termkind_t termType, const rdf_string_t* value);
 void rdf_term_release(rdf_term_t* self);
 bool rdf_term_equals(const rdf_term_t* self, const rdf_term_t* other);
 

@@ -25,7 +25,6 @@
 					<Add option="-fPIC" />
 					<Add option="-Og" />
 					<Add option="-g" />
-					<Add option="-fexceptions" />
 					<Add option="-shared" />
 					<Add option="-fasynchronous-unwind-tables" />
 					<Add option="-fstack-protector-all" />
@@ -46,7 +45,6 @@
 					<Add option="-fomit-frame-pointer" />
 					<Add option="-std=c++17" />
 					<Add option="-fPIC" />
-					<Add option="-fexceptions" />
 					<Add option="-shared" />
 					<Add option="-pipe" />
 					<Add option="-D_FORTIFY_SOURCE=1" />
@@ -67,11 +65,11 @@
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
 					<Add option="-std=c++17" />
-					<Add option="-fexceptions" />
 					<Add option="-shared" />
 					<Add option="-pipe" />
 					<Add option="-fpic" />
 					<Add option="-march=native" />
+					<Add option="-nodefaultlibs" />
 					<Add option="-DNDEBUG" />
 					<Add option="-D_FORTIFY_SOURCE=1" />
 					<Add directory="include" />
@@ -95,6 +93,7 @@
 					<Add option="-pipe" />
 					<Add option="-fpic" />
 					<Add option="-march=native" />
+					<Add option="-nodefaultlibs" />
 					<Add option="-DNDEBUG" />
 					<Add option="-D_FORTIFY_SOURCE=1" />
 					<Add directory="include" />
@@ -121,7 +120,6 @@
 					<Add option="-std=c++17" />
 					<Add option="-Og" />
 					<Add option="-g" />
-					<Add option="-fexceptions" />
 					<Add option="-fasynchronous-unwind-tables" />
 					<Add option="-fstack-protector-all" />
 					<Add option="-fpie -Wl,-pie" />
@@ -145,12 +143,14 @@
 			<Add option="-Wmissing-include-dirs" />
 			<Add option="-Weffc++" />
 			<Add option="-Wzero-as-null-pointer-constant" />
+			<Add option="-fno-exceptions" />
 			<Add option="-fstack-protector" />
 			<Add option="-fstack-clash-protection" />
 			<Add option="-Werror=format-security" />
 			<Add option="-Wl,-z,defs" />
 			<Add option="-Wl,-z,now" />
 			<Add option="-Wl,-z,relro" />
+			<Add option="-nostdlib" />
 		</Compiler>
 		<Unit filename="contrib/uthash.h" />
 		<Unit filename="include/Container.hpp" />

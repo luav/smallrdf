@@ -1,195 +1,224 @@
 /* Copyright 2016 Thomas Bergwinkl. All Rights Reserved.
-
+(c) 2020 Artem Lutov
  */
 
+ #include <ctype.h>  // isspace
 #include "NTriplesParser.h"
 
 using namespace smallrdf;
 
 
-NTriplesParser::NTriplesParser(const String* input, Document* document)
-    : document(document),
-      _buf(input->data()),
-      _cur(input->data()),
-      _end(input->data() + input->length()) {
-  if (document == 0)
-    this->document = new Document();
+NTriplesParser::NTriplesParser()
+	: _doc(new Document()),
+	  _buf(nullptr),
+	  _cur(nullptr),
+	  _end(nullptr)
+{
 }
 
-Document* NTriplesParser::parse() {
-  while (hasNext())
-    parseQuad();
-
-  return document;
+NTriplesParser::NTriplesParser(NTriplesParser&& other)
+	: _doc(other._doc),
+	  _buf(other._buf),
+	  _cur(other._cur),
+	  _end(other._end)
+{
+	other._doc = new Document();
+	other._buf = other._cur = other._end = nullptr;
 }
 
-Document* NTriplesParser::parse_static(const String* input,
-                                          Document* document) {
-  NTriplesParser parser(input, document);
-
-  return parser.parse();
+NTriplesParser::NTriplesParser(Document*& doc)
+	: _doc(doc ? doc : new Document()),
+	  _buf(nullptr),
+	  _cur(nullptr),
+	  _end(nullptr)
+{
+	doc = nullptr;  // Invalidate the pointer to insure self-sufficiency of the internal data
 }
 
-const Quad* NTriplesParser::parseQuad() {
-  readWhiteSpace();
-
-  const Term* subject = readSubject();
-
-  readWhiteSpace();
-
-  const Term* predicate = readPredicate();
-
-  readWhiteSpace();
-
-  const Term* object = readObject();
-
-  readWhiteSpace();
-
-  if (getNext(true) == '.')
-    getNext();
-
-  if (subject && predicate && object)
-    return document->triple(subject, predicate, object);
-  return NULL;
+NTriplesParser::~NTriplesParser()
+{
+	if(_doc) {
+		delete _doc;
+		_doc = nullptr;
+	}
+	_end = _cur = _buf = nullptr;
 }
 
-const Quad* NTriplesParser::parseQuad_static(const String* input,
-                                                Document* document) {
-  NTriplesParser parser(input, document);
 
-  return parser.parseQuad();
+Document* NTriplesParser::release()
+{
+	Document *res = _doc;
+	_doc = new Document();  // Reset the internal state to insure its self-sufficiency
+	_end = _cur = _buf = nullptr;
+	return res;
 }
 
-const bool NTriplesParser::hasNext() {
-  return _cur < _end;
+Document& NTriplesParser::parse(const String& input)
+{
+	_buf = input.data();
+	_cur = input.data(),
+	_end = input.data() + input.length();
+	assert(_doc && "Internal data should be initialized");
+	while (hasNext())
+		parseQuad();
+
+	return *_doc;
 }
 
-const uint8_t NTriplesParser::getNext(const bool keep) {
-  if (keep)
-    return *_cur;
-  return *_cur++;
+Document& NTriplesParser::parse(const String& input, Document*& doc)
+{
+	NTriplesParser parser(doc);
+	parser.parse(input);
+	return *(doc = parser.release());
 }
 
-const bool NTriplesParser::readWhiteSpace() {
-  bool read = false;
-  uint8_t next = getNext(true);
+const Quad* NTriplesParser::parseQuad()
+{
+	readWhiteSpace();
+	const Term* subject = readSubject();
+	readWhiteSpace();
+	const Term* predicate = readPredicate();
+	readWhiteSpace();
+	const Term* object = readObject();
+	readWhiteSpace();
+	if (*_cur == '.')
+		++_cur;
 
-  while (hasNext()
-      && (next == ' ' || next == '\t' || next == '\n' || next == '\r')) {
-    read = true;
-
-    getNext();
-
-    next = getNext(true);
-  }
-
-  return read;
+	if (subject && predicate && object)
+		return _doc->quad(*subject, *predicate, *object);
+	return nullptr;
 }
 
-const Term* NTriplesParser::readSubject() {
-  if (isIRIRef())
-    return document->namedNode(readIRIRef());
-  else if (isBlankNodeLabel())
-    return document->blankNode(readBlankNodeLabel());
-  return NULL;
+bool NTriplesParser::hasNext() const
+{
+	return _cur < _end;
 }
 
-const Term* NTriplesParser::readPredicate() {
-  if (isIRIRef())
-    return document->namedNode(readIRIRef());
-  return NULL;
+uint8_t NTriplesParser::getNext()
+{
+	return *_cur++;
 }
 
-const Term* NTriplesParser::readObject() {
-  if (isIRIRef()) {
-    return document->namedNode(readIRIRef());
-  } else if (isLiteral()) {
-    return readLiteral();
-  } else if (isBlankNodeLabel())
-    return document->blankNode(readBlankNodeLabel());
-  return NULL;
+bool NTriplesParser::readWhiteSpace()
+{
+	const auto beg = _cur;
+
+	// next == ' ' || next == '\t' || next == '\n' || next == '\r'; \f, \v
+	while(hasNext() && isspace(*_cur))
+		++_cur;
+
+	return beg != _cur;
 }
 
-const bool NTriplesParser::isLiteral() {
-  return isStringLiteralQuote();
+const Term* NTriplesParser::readSubject()
+{
+	// Note: readIRIRef() returns the nullptr only if memory is insufficient, when it is OK to crash the app
+	if (isIRIRef())
+		return _doc->namedNode(*readIRIRef());
+	else if (isBlankNodeLabel())
+		return _doc->blankNode(*readBlankNodeLabel());
+	return nullptr;
 }
 
-const Literal* NTriplesParser::readLiteral() {
-  const String* value = readStringLiteralQuote();
-  const String* language = readLangtag();
-
-  // TODO(@bergos) check for ^^
-  if (getNext(true) == '^') {
-    getNext();
-    getNext();
-  }
-
-  const String* datatype = readIRIRef();
-
-  return document->literal(value, language, datatype);
+const Term* NTriplesParser::readPredicate()
+{
+	if (isIRIRef())
+		return _doc->namedNode(*readIRIRef());
+	return nullptr;
 }
 
-const String* NTriplesParser::readLangtag() {
-  if (getNext(true) != '@')
-    return NULL;
-
-  const uint8_t* buf = ++_cur;
-  size_t length = 0;
-
-  while (hasNext() && !readWhiteSpace()) {
-    getNext();
-    length++;
-  }
-
-  return document->string(buf, length);
+const Term* NTriplesParser::readObject()
+{
+	if (isIRIRef())
+		return _doc->namedNode(*readIRIRef());
+	else if (isLiteral())
+		return readLiteral();
+	else if (isBlankNodeLabel())
+		return _doc->blankNode(*readBlankNodeLabel());
+	return nullptr;
 }
 
-const bool NTriplesParser::isIRIRef() {
-  return getNext(true) == '<';
+bool NTriplesParser::isLiteral() const
+{
+	return isStringLiteralQuote();
 }
 
-const String* NTriplesParser::readIRIRef() {
-  if (!isIRIRef())
-    return NULL;
+const Literal* NTriplesParser::readLiteral()
+{
+	if(!isLiteral())
+		return nullptr;
+	const String* value = readStringLiteralQuote();
+	const String* language = readLangtag();
 
-  const uint8_t* buf = ++_cur;
-  size_t length = 0;
+	// TODO(@bergos) check for ^^
+	if (*_cur == '^')
+		++_cur;
+	if (*_cur == '^')
+		++_cur;
 
-  while (hasNext() && getNext() != '>')
-    length++;
-
-  return document->string(buf, length);
+	// Note: readIRIRef() returns the nullptr only if memory is insufficient, when it is OK to crash the app
+	const String* dtype = readIRIRef();
+	return _doc->literal(*value, language, dtype);
 }
 
-const bool NTriplesParser::isStringLiteralQuote() {
-  return getNext(true) == '"';
+const String* NTriplesParser::readLangtag()
+{
+	if (*_cur != '@')
+		return nullptr;
+
+	auto buf = ++_cur;
+	while (hasNext() && !readWhiteSpace())
+		++_cur;
+
+	return _doc->string(String(buf, _cur - buf));
 }
 
-const String* NTriplesParser::readStringLiteralQuote() {
-  const uint8_t* buf = ++_cur;
-  size_t length = 0;
-
-  while (hasNext() && getNext() != '"')
-    length++;
-
-  return document->string(buf, length);
+bool NTriplesParser::isIRIRef() const
+{
+	return *_cur == '<';
 }
 
-const bool NTriplesParser::isBlankNodeLabel() {
-  // TODO(@bergos) check for _:
-  return getNext(true) == '_';
+const String* NTriplesParser::readIRIRef()
+{
+	if (!isIRIRef())
+		return nullptr;
+
+	auto buf = ++_cur;
+	while(hasNext() && getNext() != '>');  // Note: the cycle body is intentionally empty
+
+	String str(buf, _cur - buf - 1);
+	return _doc->string(str);  // Note: -1 to consider the increment upon the '>'
+//	return _doc->string(String(buf, _cur - buf - 1));  // Note: -1 to consider the increment upon the '>'
 }
 
-const String* NTriplesParser::readBlankNodeLabel() {
-  _cur += 2;
+bool NTriplesParser::isStringLiteralQuote() const
+{
+	return *_cur == '"';
+}
 
-  const uint8_t* buf = _cur;
-  size_t length = 0;
+const String* NTriplesParser::readStringLiteralQuote()
+{
+	auto buf = ++_cur;
+	while (hasNext() && getNext() != '"'); // Note: the cycle body is intentionally empty
 
-  while (hasNext() && !readWhiteSpace() && getNext(true) != '.') {
-    getNext();
-    length++;
-  }
+	return _doc->string(String(buf, _cur - buf - 1));   // Note: -1 to consider the increment upon the '>'
+}
 
-  return document->string(buf, length);
+bool NTriplesParser::isBlankNodeLabel() const
+{
+	// TODO(@bergos) check for _:
+	return *_cur == '_';
+}
+
+const String* NTriplesParser::readBlankNodeLabel()
+{
+	if(!isBlankNodeLabel())
+		return nullptr;
+	_cur += 2;
+
+	auto buf = _cur;
+	while (hasNext() && !readWhiteSpace() && *_cur != '.')
+		++_cur;
+
+	return _doc->string(String(buf, _cur - buf));
 }

@@ -5,104 +5,255 @@
 #ifndef CONTAINER_HPP_
 #define CONTAINER_HPP_
 
-//#include <stdexcept>
+#include <stdint.h>
+#include <assert.h>
 
 namespace smallrdf {
 
-//using std::out_of_range;
+// Interface ===================================================================
+//template<typename T>
+//class Managed: public T {
+//	uint16_t  _count;
+//	Hash _hash;
+//public:
+//	Managed(T& val)(noexcept(T()));
+//	~Managed();
+//};
+
+template<typename T>
+struct Iterator {
+	using value_type = T;
+
+	//Iterator(const T& container);
+	virtual ~Iterator()  {}
+
+	virtual Iterator* next() const=0;
+	//virtual Iterator& operator++()=0;  //!< Preincrement
+	//virtual const Iterator& operator++(int)=0 const;  //!< Postincrement
+	//virtual Iterator& operator--()=0;
+	//virtual Iterator operator--(int)=0;
+
+	virtual T& operator*()=0;
+	// Note: const varians should not be made final to allows non-abstract return types
+	virtual const T& operator*() const
+		{ return **const_cast<Iterator*>(this); }
+};
 
 template<typename T>
 class Container {
 public:
-	virtual unsigned length() const noexcept=0;
-	virtual T& add(const T& item) noexcept=0;
+	using value_type = T;
+	using Iter = Iterator<T>;
 
-    //! \brief Fetch node by index
-    //!
-    //! \param index int  - index, a negative value is treated as index from the end
-    //! \return ListNode<T>*  - resulting node
-	virtual T& get(int index)=0;
-	virtual const T& get(int index) const=0;
-	virtual T& operator[](int index) final  { return get(index); }
-	virtual const T& operator[](int index) const final  { return get(index); }
+	virtual ~Container()  {}
+	virtual unsigned length() const=0;
+
+	virtual T* add(const T& val) //final
+		{ return add(const_cast<T&>(val)); }
+	virtual T* add(T& val)=0;  // Required when copy constructor is not defined
+//	//! \deprecated Replaced with a safe interface in C++ style.
+//	//! Remained only for the compatibility with the original API until the refactoring completion
+//	virtual T* add(const T* val)=0;
+
+	virtual Iter* find(const T& val)=0;
+	virtual const Iter* find(const T& val) const final
+		{ return const_cast<Container*>(this)->find(val); }
+	virtual T& operator[](const T& val) final
+		{ return **find(val); }
+	virtual const T& operator[](const T& val) const final
+		{ return **find(val); }
+
+	// Note: const varians should not be made final to allows non-abstract return types
+	virtual const Iter* begin() const //final
+		{ return const_cast<Container*>(this)->begin(); }
+	virtual Iter* begin()=0;
+
+	virtual const Iter* end() const //final
+		{ return const_cast<Container*>(this)->end(); }
+	virtual Iter* end()=0;
 };
 
-// List --------------------------------------------------------------------
-template<typename T>
-struct ListNode {
-	ListNode(const T& val): item(val), next(nullptr)  {}
-
-	T item;
-	ListNode<T>* next;
-};
+// Stack -----------------------------------------------------------------------
+//template<typename T>
+//class Stack;
 
 template<typename T>
-class List: Container<T> {
+class StackNode: public Iterator<T> {
+	//friend class Stack<T>;
+	union {
+		T  _val;
+		uint8_t  _empty[sizeof(T)];
+	};
+	StackNode* _next;
+
+	StackNode()
+		: _empty{0}, _next(nullptr) {}
 public:
-	unsigned length() const noexcept override  { return _length; }
+	using value_type = T;
+	using Iter = Iterator<T>;
 
-	List() noexcept;
-	~List();
+	// Note: initialization by non-const reference is required when default
+	// copy constructor does not exist
+	StackNode(T& val, StackNode* next=nullptr)
+		: _val(val), _next(next)  {}
+	StackNode(const T& val, StackNode* next=nullptr)
+		: _val(val), _next(next)  {}
+//		: StackNode(const_cast<T&>(val), next)  {}
+	StackNode(StackNode&&)=default;
+	StackNode(const StackNode&)=default;
 
-	T& add(const T& item) noexcept override;
-	T& get(int index) override;
-	const T& get(int index) const override;
-private:
-	unsigned _length;
-protected:
-	ListNode<T>* _root;
-	ListNode<T>* _last;
+	StackNode& operator=(StackNode&&)=default;
+	StackNode& operator=(const StackNode&)=default;
 
-    //! \brief Fetch node by index
-    //!
-    //! \param index int  - index, a negative value is treated as index from the end
-    //! \return ListNode<T>*  - resulting node
-	ListNode<T>* node(int index) const noexcept;
+	~StackNode()  {}
+
+	//bool operator==(const StackNode& other) const;
+
+	StackNode* next() const override
+		{ return _next; }
+	//Iter& operator++() override
+	//	{ assert(_next && "Incrementing end iterator"); return *(this = _next); }
+	//const Iter& operator++(int) override;
+	//Iter& operator--() override;  //!< Postincrement
+	//Iter operator--(int) override;
+
+	T& operator*() override
+		{ return _val; }
+	const T& operator*() const override
+		{ return _val; }
+
+	static StackNode* blank()  //!< Blank (empty) node, which serves as end()
+		{ static StackNode sn; return &sn; }
 };
 
-template<typename T> List<T>::List() noexcept
-: _length(0), _root(nullptr), _last(nullptr) {
-}
+template<typename T>  // , StackNode<T> END=StackNode<T>()
+class Stack: public Container<T> {
+public:
+	using Node = StackNode<T>;
+	using Iter = Iterator<T>;
+	using Container<T>::add;
 
-template<typename T> List<T>::~List() {
-	while (_root) {
-	  ListNode<T>* cur = _root;
-	  _root = _root->next;
-	  delete cur;
+	unsigned length() const override  { return _length; }
+
+	Stack()
+		: _root(end()), _length(0)  {}
+	Stack(Stack&&)=default;
+	Stack(const Stack&)=default;
+
+	Stack& operator=(Stack&&)=default;
+	Stack& operator=(const Stack&)=default;
+	~Stack();
+
+	//bool operator==(const Stack& other) const;
+
+    //! \brief Add an object to the container
+    //! \note The container acquires ownership of the object content
+    //!
+    //! \param val T&  - an object to be added
+    //! \return T*  - acquired object, which holds the ownership of its content
+	T* add(T& val) override;
+//	T* add(const T* val) override
+//		{ return val ? add(*val) : nullptr; }
+
+	Node* find(const T& val) override;
+
+	Node* begin() override
+		{ return _root; }
+	const Node* begin() const override
+		{ return _root; }
+	Node* end() override
+		{ return const_cast<Node*>(_end); }
+	const Node* end() const override
+		{ return _end; }
+//protected:
+//    //! \brief Fetch node by index
+//    //!
+//    //! \param index int  - index, a negative value is treated as index from the end
+//    //! \return Node*  - resulting node
+//	Node* node(int index) const;
+private:
+	static Node* _end;
+	Node* _root;
+	unsigned _length;
+};
+
+template<typename T>
+typename Stack<T>::Node* Stack<T>::_end = Stack<T>::Node::blank();
+
+// Implementation ==============================================================
+//// Managed ---------------------------------------------------------------------
+//template<typename T>
+//Managed<T>::Managed(T& val)(noexcept(T()))
+//: T(val), _count(0), _hash(0) {
+//
+//}
+//
+//template<typename T>
+//Managed<T>::~Managed() {
+//	if(--_count)
+//		return;
+//	// TODO: Delete from the hashmap
+//}
+
+// Hashmap ---------------------------------------------------------------------
+
+// Stack -----------------------------------------------------------------------
+//template<typename T>
+//const Iterator<T>& StackNode<T>::operator++(int)
+//{
+//	StackNode<T>* cur = this;
+//	assert(_next && "Incrementing end iterator");
+//	this = _next;
+//	return *cur;
+//}
+
+template<typename T>
+Stack<T>::~Stack()
+{
+	Node* cur = begin();
+	while(cur != end()) {
+		Node* old = cur;
+		cur = cur->next();
+		delete old;
 	}
+//	Iter* cur = begin();
+//	while(cur != end()) {
+//		Iter* old = cur;
+//		cur = cur->next();
+//		delete old;
+//	}
 }
 
-template<typename T> ListNode<T>* List<T>::node(int index) const noexcept {
-	ListNode<T>* cur = _root;
+//template<typename T>
+//StackNode<T>* Stack<T>::node(int index) const
+//{
+//	StackNode<T>* cur = _root;
+//
+//	if(index < 0)
+//		index += _length;
+//	while (index-- && cur)
+//	  cur = cur->next;
+//	return cur;
+//}
 
-	if(index < 0)
-		index += _length;
-	while (index-- && cur)
-	  cur = cur->next;
-	return cur;
-}
-
-template<typename T> T& List<T>::add(const T& item) noexcept {
-	ListNode<T>* cur = new ListNode<T>(item);
-
+template<typename T>
+T* Stack<T>::add(T& val)
+{
+	_root = new Node(val, _root);
 	if (_root) {
-	  _last->next = cur;
-	  _last = cur;
+		++_length;
+		return &**_root;
 	}
-	else _root = _last = cur;
-	++_length;
-
-	return *cur;
+	return nullptr;
 }
 
-template<typename T> T& List<T>::get(int index) {
-	ListNode<T>* cur = node(index);
-
-//	// Note: the app is crashed if cur = nullptr exception is not handled,
-//	// but this handling affects performance.
-//	if (!cur)
-//		throw out_of_range("The index is out of range");
-	return cur->item;
+template<typename T>
+StackNode<T>* Stack<T>::find(const T& val)
+{
+	Node* cur = _root;
+	while(cur != end() && **cur != val)
+		cur = cur->next();
+	return cur;
 }
 
 }  // smallrdf
