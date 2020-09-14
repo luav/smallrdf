@@ -39,6 +39,8 @@ public:
 	String(const uint8_t* buf, size_t size);
 #ifdef ARDUINO
 	explicit String(const AString& str, bool copy = false);
+	//! \brief Implicit conversion to Arduino String
+	operator AString() const  { return c_str(); }
 #endif // ARDUINO
 
     //! \brief Acquire the string

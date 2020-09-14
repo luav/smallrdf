@@ -12,11 +12,16 @@ namespace smallrdf {
 
 // Interface ===================================================================
 //template<typename T>
-//class Managed: public T {
+//class Managed {
+//	T* _val;
 //	uint16_t  _count;
-//	Hash _hash;
+//	//Hash _hash;
 //public:
-//	Managed(T& val)(noexcept(T()));
+////	Managed(T& val)(noexcept(T()));  // Required when const T's copy constructor is not defined
+////	Managed(const T& val)(noexcept(T()));
+////		{ return add(const_cast<T&>(val)); }
+//	Managed(T*& val);
+//
 //	~Managed();
 //};
 
@@ -44,7 +49,7 @@ public:
 	virtual ~Container()  {}
 	virtual unsigned length() const=0;
 
-	virtual T* add(T& val)=0;  // Required when copy constructor is not defined
+	virtual T* add(T& val)=0;  // Required when const T's copy constructor is not defined
 	virtual T* add(const T& val) final
 		{ return add(const_cast<T&>(val)); }
 

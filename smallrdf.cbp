@@ -43,6 +43,7 @@
 				<Option createStaticLib="1" />
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
+					<Add option="-O3" />
 					<Add option="-std=c++17" />
 					<Add option="-fPIC" />
 					<Add option="-shared" />
@@ -51,7 +52,6 @@
 					<Add directory="include" />
 				</Compiler>
 				<Linker>
-					<Add option="-O3" />
 					<Add option="-s" />
 				</Linker>
 			</Target>
@@ -64,6 +64,7 @@
 				<Option createStaticLib="1" />
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
+					<Add option="-O3" />
 					<Add option="-std=c++17" />
 					<Add option="-shared" />
 					<Add option="-pipe" />
@@ -75,7 +76,6 @@
 					<Add directory="include" />
 				</Compiler>
 				<Linker>
-					<Add option="-O3" />
 					<Add option="-s" />
 				</Linker>
 			</Target>
@@ -88,6 +88,7 @@
 				<Option createStaticLib="1" />
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
+					<Add option="-O3" />
 					<Add option="-std=c17" />
 					<Add option="-shared" />
 					<Add option="-pipe" />
@@ -99,7 +100,6 @@
 					<Add directory="include" />
 				</Compiler>
 				<Linker>
-					<Add option="-O3" />
 					<Add option="-s" />
 				</Linker>
 			</Target>

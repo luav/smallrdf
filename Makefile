@@ -30,34 +30,34 @@ DEP_DEBUG =
 OUT_DEBUG = bin/Debug/smallrdf.so
 
 INC_RELEASE = $(INC) -Iinclude
-CFLAGS_RELEASE = $(CFLAGS) -fomit-frame-pointer -std=c++17 -fPIC -shared -pipe -D_FORTIFY_SOURCE=1
+CFLAGS_RELEASE = $(CFLAGS) -fomit-frame-pointer -O3 -std=c++17 -fPIC -shared -pipe -D_FORTIFY_SOURCE=1
 RESINC_RELEASE = $(RESINC)
 RCFLAGS_RELEASE = $(RCFLAGS)
 LIBDIR_RELEASE = $(LIBDIR)
 LIB_RELEASE = $(LIB)
-LDFLAGS_RELEASE = $(LDFLAGS) -O3 -s
+LDFLAGS_RELEASE = $(LDFLAGS) -s
 OBJDIR_RELEASE = obj/Release
 DEP_RELEASE = 
 OUT_RELEASE = bin/Release/smallrdf.so
 
 INC_RELEASE_NATIVE = $(INC) -Iinclude
-CFLAGS_RELEASE_NATIVE = $(CFLAGS) -fomit-frame-pointer -std=c++17 -shared -pipe -fpic -march=native -nodefaultlibs -DNDEBUG -D_FORTIFY_SOURCE=1
+CFLAGS_RELEASE_NATIVE = $(CFLAGS) -fomit-frame-pointer -O3 -std=c++17 -shared -pipe -fpic -march=native -nodefaultlibs -DNDEBUG -D_FORTIFY_SOURCE=1
 RESINC_RELEASE_NATIVE = $(RESINC)
 RCFLAGS_RELEASE_NATIVE = $(RCFLAGS)
 LIBDIR_RELEASE_NATIVE = $(LIBDIR)
 LIB_RELEASE_NATIVE = $(LIB)
-LDFLAGS_RELEASE_NATIVE = $(LDFLAGS) -O3 -s
+LDFLAGS_RELEASE_NATIVE = $(LDFLAGS) -s
 OBJDIR_RELEASE_NATIVE = obj/Release
 DEP_RELEASE_NATIVE = 
 OUT_RELEASE_NATIVE = bin/Release/smallrdf.so
 
 INC_RELEASE_NATIVE_C = $(INC) -Iinclude
-CFLAGS_RELEASE_NATIVE_C = $(CFLAGS) -fomit-frame-pointer -std=c17 -shared -pipe -fpic -march=native -nodefaultlibs -DNDEBUG -D_FORTIFY_SOURCE=1
+CFLAGS_RELEASE_NATIVE_C = $(CFLAGS) -fomit-frame-pointer -O3 -std=c17 -shared -pipe -fpic -march=native -nodefaultlibs -DNDEBUG -D_FORTIFY_SOURCE=1
 RESINC_RELEASE_NATIVE_C = $(RESINC)
 RCFLAGS_RELEASE_NATIVE_C = $(RCFLAGS)
 LIBDIR_RELEASE_NATIVE_C = $(LIBDIR)
 LIB_RELEASE_NATIVE_C = $(LIB)
-LDFLAGS_RELEASE_NATIVE_C = $(LDFLAGS) -O3 -s
+LDFLAGS_RELEASE_NATIVE_C = $(LDFLAGS) -s
 OBJDIR_RELEASE_NATIVE_C = obj/Release
 DEP_RELEASE_NATIVE_C = 
 OUT_RELEASE_NATIVE_C = bin/Release/smallrdf.so
