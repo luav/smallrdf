@@ -19,10 +19,11 @@ namespace smallrdf {
 // Implementation of C++ interface =============================================
 class String {
 public:
-    //! \brief Become a view for the cstr
+    //! \brief Become a view for the cstr or allocate a new String from it
     //!
     //! \param cstr const char*  - original string that holds the data ownership
-	explicit String(const char* cstr);
+    //! \param copy=false bool  - whether to copy cstr or become its view
+	explicit String(const char* cstr, bool copy=false);
 
     //! \brief Create an empty string of the specified size (including the null-terminator)
     //!
@@ -38,6 +39,7 @@ public:
 	//! \param size size_t  - size of the buffer
 	String(const uint8_t* buf, size_t size);
 #ifdef ARDUINO
+    //! \brief Become a view for the Arduino String or allocate a new String from it
 	explicit String(const AString& str, bool copy = false);
 	//! \brief Implicit conversion to Arduino String
 	operator AString() const  { return c_str(); }

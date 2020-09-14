@@ -10,11 +10,18 @@
 using namespace smallrdf;
 
 
-String::String(const char* cstr)
+String::String(const char* cstr, bool copy)
 	: _data(reinterpret_cast<decltype(_data)>(const_cast<char*>(cstr))),
 	  _size(_data ? strlen(cstr) + 1 : 0),
 	  _allocated(false)
 {
+	if (copy) {
+		_data = static_cast<decltype(_data)>(malloc(_size));
+		if(_data) {
+			_allocated = true;
+			memcpy(_data, cstr, _size);
+		} else _size = 0;
+	}
 }
 
 String::String(size_t size)
@@ -49,15 +56,8 @@ String::String(const uint8_t* buf, size_t size)
 
 #ifdef ARDUINO
 String::String(const AString& str, bool copy)
-	: String(str.c_str())
+	: String(str.c_str(), copy)
 {
-	if (copy) {
-		_data = static_cast<decltype(_data)>(malloc(_size));
-		if(_data) {
-			_allocated = true;
-			memcpy(_data, str.c_str(), _size);
-		} else _size = 0;
-	}
 }
 #endif  // ARDUINO
 

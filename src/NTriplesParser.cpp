@@ -32,7 +32,7 @@ NTriplesParser::NTriplesParser(Document*& doc)
 	  _cur(nullptr),
 	  _end(nullptr)
 {
-	doc = nullptr;  // Invalidate the pointer to insure self-sufficiency of the internal data
+	doc = nullptr;  // Invalidate the pointer to ensure self-sufficiency of the internal data
 }
 
 NTriplesParser::~NTriplesParser()

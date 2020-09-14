@@ -26,7 +26,8 @@ NTriplesSerializer::NTriplesSerializer(NTriplesSerializer&& other)
 }
 
 NTriplesSerializer::NTriplesSerializer(String*& storage)
-	: _buf(storage ? storage : new String()),
+	// Release the storage to ensure self-sufficiency of the internal data
+	: _buf(storage ? storage : new String()),  // storage->release()
 	  _cur(_buf->data() + _buf->length()),
 	  _end(_buf->data() + _buf->length())
 {
