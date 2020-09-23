@@ -140,8 +140,8 @@
 			<Add option="-Wundef" />
 			<Add option="-Wfloat-equal" />
 			<Add option="-Wunreachable-code" />
-			<Add option="-Wmissing-include-dirs" />
 			<Add option="-Weffc++" />
+			<Add option="-Wmissing-include-dirs" />
 			<Add option="-Wzero-as-null-pointer-constant" />
 			<Add option="-fno-exceptions" />
 			<Add option="-fstack-protector" />
@@ -150,7 +150,7 @@
 			<Add option="-Wl,-z,defs" />
 			<Add option="-Wl,-z,now" />
 			<Add option="-Wl,-z,relro" />
-			<Add option="-nostdlib" />
+			<Add option="-Wl,-nostdlib" />
 		</Compiler>
 		<Unit filename="contrib/uthash.h" />
 		<Unit filename="include/Container.hpp" />

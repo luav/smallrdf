@@ -112,7 +112,8 @@ public:
 		{ return _val; }
 
 	static StackNode* blank()  //!< Blank (empty) node, which serves as end()
-		{ static StackNode sn; return &sn; }
+		//{ static StackNode sn; return &sn; }
+		{ return reinterpret_cast<StackNode*>(-1); }
 };
 
 template<typename T>  // , StackNode<T> END=StackNode<T>()

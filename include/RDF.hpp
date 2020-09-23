@@ -7,7 +7,12 @@
 
 #ifdef ARDUINO
 #include <Arduino.h>
-using AString = String;
+// Note: Arduino.h may define min and max macroses that break C++ stdlib compilation
+#if defined(_LIBCPP_VERSION) || defined(__GLIBCXX__) || (__cplusplus >= 201703L && __has_include(__cpp_lib_result_of_sfinae))
+#undef max
+#undef min
+#endif // C++ stdlib
+using AString = String;  // Arduino String
 #endif  // ARDUINO
 
 #include "Container.hpp"
