@@ -13,6 +13,7 @@ namespace arddefs {
 #undef max
 #undef min
 #endif // C++ stdlib
+using AString = String;  // Arduino String
 }  // arddefs
 #endif  // ARDUINO
 
@@ -23,7 +24,7 @@ namespace arddefs {
 namespace smallrdf {
 
 #ifdef ARDUINO
-using AString = arddefs::String;  // Arduino String
+using AString = arddefs::AString;  // Arduino String
 #endif  // ARDUINO
 
 // Implementation of C++ interface =============================================

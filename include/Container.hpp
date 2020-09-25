@@ -95,9 +95,18 @@ public:
 		: _val(val), _next(next)  {}
 	StackNode(StackNode&&)=default;
 	StackNode(const StackNode&)=default;
+//	StackNode(StackNode& other)
+//		// Note: T(other._val)) for T=String acquires the ownership
+//		: _val(T(other._val)), _next(other._next)  {}
 
 	StackNode& operator=(StackNode&&)=default;
 	StackNode& operator=(const StackNode&)=default;
+//	StackNode& operator=(StackNode& other)
+//		{
+//			// Note: T(other._val)) for T=String acquires the ownership
+//			_val = T(other._val);
+//			_next = other._next;
+//		}
 
 	~StackNode()  {}
 
