@@ -2,17 +2,18 @@
 //! \author Copyright 2016 Thomas Bergwinkl. All Rights Reserved.
 //!		 (c) 2020 Artem Lutov
 
-#ifndef _HPP_
-#define _HPP_
+#ifndef RDF_HPP_
+#define RDF_HPP_
 
 #ifdef ARDUINO
+namespace arddefs {
 #include <Arduino.h>
 // Note: Arduino.h may define min and max macroses that break C++ stdlib compilation
-#if defined(_LIBCPP_VERSION) || defined(__GLIBCXX__) || (__cplusplus >= 201703L && __has_include(__cpp_lib_result_of_sfinae))
+#if defined(_LIBCPP_VERSION) || defined(__GLIBCXX__) || defined(__cpp_lib_result_of_sfinae)
 #undef max
 #undef min
 #endif // C++ stdlib
-using AString = String;  // Arduino String
+}  // arddefs
 #endif  // ARDUINO
 
 #include "Container.hpp"
@@ -20,6 +21,10 @@ using AString = String;  // Arduino String
 
 
 namespace smallrdf {
+
+#ifdef ARDUINO
+using AString = arddefs::String;  // Arduino String
+#endif  // ARDUINO
 
 // Implementation of C++ interface =============================================
 class String {
@@ -211,6 +216,11 @@ public:
 	// Note: pass some parameters by reference to ensure that each Quad is a valid triple
 	Quad(const Term& subject, const Term& predicate,
 		const Term& object, const Term* graph = nullptr);
+	//! Explicit constructor to produce incomplete quads for partial search
+	//! \attention Should not be used to store quads in the dataset
+	explicit Quad(const Term* subject = nullptr, const Term* predicate = nullptr,
+		const Term* object = nullptr, const Term* graph = nullptr);
+
 	Quad(Quad&&)=default;
 	//! \brief Copy constructor
 	//! \note Is used because the object does not hold the ownership of its members,
@@ -267,4 +277,4 @@ protected:
 
 }  // smallrdf
 
-#endif  // _HPP_
+#endif  // RDF_HPP_

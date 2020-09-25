@@ -206,6 +206,15 @@ Quad::Quad(const Term& subject, const Term& predicate,
 {
 }
 
+Quad::Quad(const Term* subject, const Term* predicate,
+           const Term* object, const Term* graph)
+	: subject(subject),
+	  predicate(predicate),
+	  object(object),
+	  graph(graph)
+{
+}
+
 bool Quad::operator==(const Quad& other) const
 {
 	return (subject == other.subject || *subject == *other.subject)

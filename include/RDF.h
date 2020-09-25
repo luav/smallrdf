@@ -2,8 +2,8 @@
 //! \author (c) 2020 Aretem Lutov
 //! \license Apache License 2
 
-#ifndef _H_
-#define _H_
+#ifndef RDF_H_
+#define RDF_H_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -150,4 +150,4 @@ const rdf_term_t* rdf_document_rfindTerm(const rdf_document_t* self, const rdf_t
 } // extern "C"
 #endif // __cplusplus
 
-#endif  // _H_
+#endif  // RDF_H_
