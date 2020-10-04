@@ -13,7 +13,7 @@ namespace arddefs {
 #undef max
 #undef min
 #endif // C++ stdlib
-using AString = String;  // Arduino String
+typedef String  AString;  // Arduino String
 }  // arddefs
 #endif  // ARDUINO
 
@@ -24,7 +24,7 @@ using AString = String;  // Arduino String
 namespace smallrdf {
 
 #ifdef ARDUINO
-using AString = arddefs::AString;  // Arduino String
+typedef arddefs::AString  AString;  // Arduino String
 #endif  // ARDUINO
 
 // Implementation of C++ interface =============================================
@@ -56,20 +56,24 @@ public:
 	operator AString() const  { return c_str(); }
 #endif // ARDUINO
 
+#if __cplusplus >= 201103L
     //! \brief Acquire the string
     //!
     //! \param other String&&  - original string being acquired
 	String(String&& other)=default;
+#endif // __cplusplus 11+
     //! \brief Acquire ownership of data if other's content, making other a view
     //!
     //! \param other const String&  - original string, which could hold an ownership and becomes a view
 	String(String& other);
 
+#if __cplusplus >= 201103L
     //! \brief Acquire the string
     //!
     //! \param other String&&  - original string being acquired
     //! \return String&  - resulting string
 	String& operator=(String&& other);
+#endif // __cplusplus 11+
     //! \brief Become a view for the string
     //! \attention The former content is released, which may cause dangling references to released memory
     //!
@@ -84,14 +88,13 @@ public:
     //!
     //! \param other String&  - swapoing string
     //! \return void
-
 	void swap(String& other);
+
     //! \brief Resize the string
     //! \note A string view is always transformed to the string
     //!
     //! \param length size_t  - required length (excluding the null-terminator)
     //! \return bool  - whether resized successfully, otherwise the original content is retained
-
 	bool resize(size_t length);
     //! \brief Acquire ownership of the content, transforming view to the string
     //! \note Does nothing if the content is already owned
@@ -133,7 +136,9 @@ public:
 	bool allocated() const
 		{ return _allocated; }
 private:
-	uint8_t* _data;  //!< String content
+	typedef uint8_t  data_t;
+
+	data_t* _data;  //!< String content
 	size_t  _size;  //!<  Size in bytes including the null-terminator
 	bool _allocated;  //!< The string data were allocated rather than acquierd
 };
@@ -145,13 +150,17 @@ public:
 
 	// Note: pass a value by reference to ensure that it is not a nullptr
 	Term(TermKind tkind, const String& tval);
+#if __cplusplus >= 201103L
 	Term(Term&&)=default;
+#endif // __cplusplus 11+
 	//! \brief Copy constructor
 	//! \note Is used because the object does not hold the ownership of its members,
 	//! 	allowing to copy their pointers
 	Term(const Term&)=default;
 
+#if __cplusplus >= 201103L
 	Term& operator=(Term&&)=default;
+#endif // __cplusplus 11+
 	Term& operator=(const Term&)=default;
 	virtual ~Term() {}
 
@@ -164,13 +173,17 @@ public:
 class NamedNode: public Term {
 public:
 	explicit NamedNode(const String& value);
+#if __cplusplus >= 201103L
 	NamedNode(NamedNode&&)=default;
+#endif // __cplusplus 11+
 	//! \brief Copy constructor
 	//! \note Is used because the object does not hold the ownership of its members,
 	//! 	allowing to copy their pointers
 	NamedNode(const NamedNode&)=default;
 
+#if __cplusplus >= 201103L
 	NamedNode& operator=(NamedNode&&)=default;
+#endif // __cplusplus 11+
 	NamedNode& operator=(const NamedNode&)=default;
 };
 
@@ -181,13 +194,17 @@ public:
 
 	Literal(const String& value, const String* lang=nullptr,
 			const String* dtype=nullptr);
+#if __cplusplus >= 201103L
 	Literal(Literal&&)=default;
+#endif // __cplusplus 11+
 	//! \brief Copy constructor
 	//! \note Is used because the object does not hold the ownership of its members,
 	//! 	allowing to copy their pointers
 	Literal(const Literal&)=default;
 
+#if __cplusplus >= 201103L
 	Literal& operator=(Literal&&)=default;
+#endif // __cplusplus 11+
 	Literal& operator=(const Literal&)=default;
 
 	bool operator==(const Term& other) const override;
@@ -196,13 +213,17 @@ public:
 class BlankNode: public Term {
 public:
 	explicit BlankNode(const String& value);
+#if __cplusplus >= 201103L
 	BlankNode(BlankNode&&)=default;
+#endif // __cplusplus 11+
 	//! \brief Copy constructor
 	//! \note Is used because the object does not hold the ownership of its members,
 	//! 	allowing to copy their pointers
 	BlankNode(const BlankNode&)=default;
 
+#if __cplusplus >= 201103L
 	BlankNode& operator=(BlankNode&&)=default;
+#endif // __cplusplus 11+
 	BlankNode& operator=(const BlankNode&)=default;
 };
 
@@ -222,13 +243,17 @@ public:
 	explicit Quad(const Term* subject = nullptr, const Term* predicate = nullptr,
 		const Term* object = nullptr, const Term* graph = nullptr);
 
+#if __cplusplus >= 201103L
 	Quad(Quad&&)=default;
+#endif // __cplusplus 11+
 	//! \brief Copy constructor
 	//! \note Is used because the object does not hold the ownership of its members,
 	//! 	allowing to copy their pointers
 	Quad(const Quad&)=default;
 
+#if __cplusplus >= 201103L
 	Quad& operator=(Quad&&)=default;
+#endif // __cplusplus 11+
 	Quad& operator=(const Quad&)=default;
 
 	bool operator==(const Quad& other) const;
@@ -241,8 +266,7 @@ public:
 //! \brief Main interface for the Quad/Triplesotre
 class Dataset {
 public:
-	using Quads = Stack<Quad>;
-
+	typedef Stack<Quad>  Quads;
 	Quads quads;  //!< Actual Quad/Triplestore
 
 	virtual ~Dataset()  {}
@@ -254,8 +278,11 @@ public:
 
 //! \brief RDF document, which owns all the stored objects, becoming a session memory manager
 class Document: public Dataset {
-	Stack<String> _strings;
-	Stack<Term> _terms;
+	typedef Stack<String>  Strings;
+	Strings _strings;
+
+	typedef Stack<Term>  Terms;
+	Terms _terms;
 public:
     //! \brief Transfer ownership of the str to the document
     //!
@@ -263,8 +290,10 @@ public:
     //! 	the ownership to the document
     //! \return const String*  - stored owned sting
 	const String* string(String& str);
+#if __cplusplus >= 201103L
 	const String* string(String&& str)
 		{ return string(str); }  // Calls string(String& str);
+#endif // __cplusplus 11+
 	const NamedNode* namedNode(const String& value);
 	const Literal* literal(const String& value, const String* lang=nullptr,
 						   const String* dtyoe=nullptr);

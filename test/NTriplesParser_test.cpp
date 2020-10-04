@@ -17,6 +17,7 @@ TEST(NTriplesParser, NamedNode) {
   const Document& doc = parser.parse(input);
   const Quad& quad = **doc.quads.begin();
 
+  printf("Subj val: %s\n", quad.subject->value->c_str());
   ASSERT_TRUE(*quad.subject->value == String("http://example.org/subject"));
   ASSERT_TRUE(*quad.predicate->value == String("http://example.org/predicate"));
   ASSERT_TRUE(*quad.object->value == String("http://example.org/object"));
@@ -33,6 +34,7 @@ TEST(NTriplesParser, Literal) {
   }
   const Quad* quad = &**doc->quads.begin();
 
+  printf("Subj val: %s\n", quad->subject->value->c_str());
   ASSERT_TRUE(*quad->subject->value == String("http://example.org/subject"));
   ASSERT_TRUE(*quad->predicate->value == String("http://example.org/predicate"));
   ASSERT_TRUE(*quad->object->value == String("object"));
@@ -40,7 +42,7 @@ TEST(NTriplesParser, Literal) {
   const String input2(
       "<http://example.org/subject2> <http://example.org/predicate2> \"object2\" .");
   NTriplesParser::parse(input2, doc);
-  auto qit = *doc->quads.begin();
+  Document::Quads::Iter& qit = *doc->quads.begin();
   quad = &*qit;
   ASSERT_TRUE(*quad->subject->value == String("http://example.org/subject2"));
   quad = &**qit.next();

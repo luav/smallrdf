@@ -16,6 +16,7 @@ NTriplesSerializer::NTriplesSerializer()
 {
 }
 
+#if __cplusplus >= 201103L
 NTriplesSerializer::NTriplesSerializer(NTriplesSerializer&& other)
 	: _buf(other._buf),
 	  _cur(other._cur),
@@ -24,6 +25,7 @@ NTriplesSerializer::NTriplesSerializer(NTriplesSerializer&& other)
 	other._buf = new String();
 	other._cur = other._end = nullptr;
 }
+#endif // __cplusplus 11+
 
 NTriplesSerializer::NTriplesSerializer(String*& storage)
 	// Release the storage to ensure self-sufficiency of the internal data
@@ -98,14 +100,14 @@ void NTriplesSerializer::write(const String& str)
 size_t NTriplesSerializer::datasetSize(const Dataset& dataset) const
 {
 	size_t size = 0;
-	for(auto piq = dataset.quads.begin(); piq != dataset.quads.end(); piq = piq->next())
+	for(const Dataset::Quads::Iter* piq = dataset.quads.begin(); piq != dataset.quads.end(); piq = piq->next())
 		size += quadSize(**piq);
 	return size;
 }
 
 void NTriplesSerializer::serializeDataset(const Dataset& dataset)
 {
-	for(auto piq = dataset.quads.begin(); piq != dataset.quads.end(); piq = piq->next())
+	for(const Dataset::Quads::Iter* piq = dataset.quads.begin(); piq != dataset.quads.end(); piq = piq->next())
 		serializeQuad(**piq);
 	write(0);
 }

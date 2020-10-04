@@ -65,12 +65,20 @@ typedef struct {
 
 #else // __cplusplus
 
+#if __cplusplus < 201103L && !defined(nullptr)
+	#ifdef NULL
+		#define nullptr  NULL
+	#else
+		#define nullptr  __null
+	#endif // NULL
+#endif // < __cplusplus 11+
+
 // Omit restrict C keyword
 #define restrict
 
 namespace smallrdf {
 
-using TermKind = rdf_termkind_t;
+typedef rdf_termkind_t  TermKind;
 
 class String;
 class Term;
@@ -83,14 +91,14 @@ class Document;
 
 }  // smallrdf
 
-using rdf_string_t = smallrdf::String;
-using rdf_term_t = smallrdf::Term;
-using rdf_namednode_t = smallrdf::NamedNode;
-using rdf_literal_t = smallrdf::Literal;
-using rdf_blanknode_t = smallrdf::BlankNode;
-using rdf_quad_t = smallrdf::Quad;
-using rdf_dataset_t = smallrdf::Dataset;
-using rdf_document_t = smallrdf::Document;
+typedef smallrdf::String  rdf_string_t;
+typedef smallrdf::Term  rdf_term_t;
+typedef smallrdf::NamedNode  rdf_namednode_t;
+typedef smallrdf::Literal  rdf_literal_t;
+typedef smallrdf::BlankNode  rdf_blanknode_t;
+typedef smallrdf::Quad  rdf_quad_t;
+typedef smallrdf::Dataset  rdf_dataset_t;
+typedef smallrdf::Document  rdf_document_t;
 
 extern "C" {
 

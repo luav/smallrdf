@@ -12,7 +12,7 @@ LD = g++
 WINDRES = windres
 
 INC = 
-CFLAGS = -Wnon-virtual-dtor -Winit-self -Wcast-align -Wundef -Wfloat-equal -Wunreachable-code -Wmissing-include-dirs -Weffc++ -Wzero-as-null-pointer-constant -fno-exceptions -fstack-protector -fstack-clash-protection -Werror=format-security -Wl,-z,defs -Wl,-z,now -Wl,-z,relro -nostdlib
+CFLAGS = -Wnon-virtual-dtor -Winit-self -Wcast-align -Wundef -Wfloat-equal -Wunreachable-code -Weffc++ -Wmissing-include-dirs -Wzero-as-null-pointer-constant -fno-exceptions -fstack-protector -fstack-clash-protection -Werror=format-security -Wl,-z,defs -Wl,-z,now -Wl,-z,relro -Wl,-nostdlib
 RESINC = 
 LIBDIR = 
 LIB = 

@@ -16,6 +16,7 @@ NTriplesParser::NTriplesParser()
 {
 }
 
+#if __cplusplus >= 201103L
 NTriplesParser::NTriplesParser(NTriplesParser&& other)
 	: _doc(other._doc),
 	  _buf(other._buf),
@@ -25,6 +26,7 @@ NTriplesParser::NTriplesParser(NTriplesParser&& other)
 	other._doc = new Document();
 	other._buf = other._cur = other._end = nullptr;
 }
+#endif // __cplusplus 11+
 
 NTriplesParser::NTriplesParser(Document*& doc)
 	: _doc(doc ? doc : new Document()),
@@ -94,14 +96,14 @@ bool NTriplesParser::hasNext() const
 	return _cur < _end;
 }
 
-uint8_t NTriplesParser::getNext()
+NTriplesParser::data_t NTriplesParser::getNext()
 {
 	return *_cur++;
 }
 
 bool NTriplesParser::readWhiteSpace()
 {
-	const auto beg = _cur;
+	const data_t* beg = _cur;
 
 	// next == ' ' || next == '\t' || next == '\n' || next == '\r'; \f, \v
 	while(hasNext() && isspace(*_cur))
@@ -166,11 +168,18 @@ const String* NTriplesParser::readLangtag()
 	if (*_cur != '@')
 		return nullptr;
 
-	auto buf = ++_cur;
+	data_t* buf = ++_cur;
 	while (hasNext() && !readWhiteSpace())
 		++_cur;
 
-	return _doc->string(String(buf, _cur - buf));
+#if __cplusplus >= 201103L
+	#define STR_PARAM  String(buf, _cur - buf)
+#else
+	String  str(buf, _cur - buf);
+	#define STR_PARAM  str
+#endif // __cplusplus 11+
+	return _doc->string(STR_PARAM);
+#undef STR_PARAM
 }
 
 bool NTriplesParser::isIRIRef() const
@@ -183,10 +192,18 @@ const String* NTriplesParser::readIRIRef()
 	if (!isIRIRef())
 		return nullptr;
 
-	auto buf = ++_cur;
+	data_t* buf = ++_cur;
 	while(hasNext() && getNext() != '>');  // Note: the cycle body is intentionally empty
 
-	return _doc->string(String(buf, _cur - buf - 1));  // Note: -1 to consider the increment upon the '>'
+// Note: -1 to consider the increment upon the '>'
+#if __cplusplus >= 201103L
+	#define STR_PARAM  String(buf, _cur - buf - 1)
+#else
+	String  str(buf, _cur - buf - 1);
+	#define STR_PARAM  str
+#endif // __cplusplus 11+
+	return _doc->string(STR_PARAM);
+#undef STR_PARAM
 }
 
 bool NTriplesParser::isStringLiteralQuote() const
@@ -196,10 +213,18 @@ bool NTriplesParser::isStringLiteralQuote() const
 
 const String* NTriplesParser::readStringLiteralQuote()
 {
-	auto buf = ++_cur;
+	data_t* buf = ++_cur;
 	while (hasNext() && getNext() != '"'); // Note: the cycle body is intentionally empty
 
-	return _doc->string(String(buf, _cur - buf - 1));   // Note: -1 to consider the increment upon the '>'
+// Note: -1 to consider the increment upon the '"'
+#if __cplusplus >= 201103L
+	#define STR_PARAM  String(buf, _cur - buf - 1)
+#else
+	String  str(buf, _cur - buf - 1);
+	#define STR_PARAM  str
+#endif // __cplusplus 11+
+	return _doc->string(STR_PARAM);
+#undef STR_PARAM
 }
 
 bool NTriplesParser::isBlankNodeLabel() const
@@ -214,9 +239,16 @@ const String* NTriplesParser::readBlankNodeLabel()
 		return nullptr;
 	_cur += 2;
 
-	auto buf = _cur;
+	data_t* buf = _cur;
 	while (hasNext() && !readWhiteSpace() && *_cur != '.')
 		++_cur;
 
-	return _doc->string(String(buf, _cur - buf));
+#if __cplusplus >= 201103L
+	#define STR_PARAM  String(buf, _cur - buf)
+#else
+	String  str(buf, _cur - buf);
+	#define STR_PARAM  str
+#endif // __cplusplus 11+
+	return _doc->string(STR_PARAM);
+#undef STR_PARAM
 }

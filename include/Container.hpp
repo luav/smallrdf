@@ -10,6 +10,14 @@
 
 namespace smallrdf {
 
+#if __cplusplus < 201103L && !defined(nullptr)
+	#ifdef NULL
+		#define nullptr  NULL
+	#else
+		#define nullptr  __null
+	#endif // NULL
+#endif // < __cplusplus 11+
+
 // Interface ===================================================================
 //template<typename T>
 //class Managed {
@@ -27,7 +35,7 @@ namespace smallrdf {
 
 template<typename T>
 struct Iterator {
-	using value_type = T;
+	typedef T  value_type;
 
 	virtual ~Iterator()  {}
 
@@ -43,8 +51,8 @@ struct Iterator {
 template<typename T>
 class Container {
 public:
-	using value_type = T;
-	using Iter = Iterator<T>;
+	typedef T  value_type;
+	typedef Iterator<T>  Iter;
 
 	virtual ~Container()  {}
 	virtual unsigned length() const=0;
@@ -74,17 +82,18 @@ public:
 // Stack -----------------------------------------------------------------------
 template<typename T>
 class StackNode: public Iterator<T> {
-	union {
-		T  _val;
-		uint8_t  _empty[sizeof(T)];
-	};
+//	union {
+//		T  _val;
+//		uint8_t  _empty[sizeof(T)];
+//	};
+	T  _val;
 	StackNode* _next;
 
-	StackNode()
-		: _empty{0}, _next(nullptr) {}
+//	StackNode()
+//		: _empty{0}, _next(nullptr) {}
 public:
-	using value_type = T;
-	using Iter = Iterator<T>;
+	typedef T  value_type;
+	typedef Iterator<T>  Iter;
 	using Iter::operator*;
 
 	// Note: initialization by non-const reference is required when default
@@ -93,13 +102,17 @@ public:
 		: _val(val), _next(next)  {}
 	StackNode(const T& val, StackNode* next=nullptr)
 		: _val(val), _next(next)  {}
+#if __cplusplus >= 201103L
 	StackNode(StackNode&&)=default;
+#endif // __cplusplus 11+
 	StackNode(const StackNode&)=default;
 //	StackNode(StackNode& other)
 //		// Note: T(other._val)) for T=String acquires the ownership
 //		: _val(T(other._val)), _next(other._next)  {}
 
+#if __cplusplus >= 201103L
 	StackNode& operator=(StackNode&&)=default;
+#endif // __cplusplus 11+
 	StackNode& operator=(const StackNode&)=default;
 //	StackNode& operator=(StackNode& other)
 //		{
@@ -128,9 +141,9 @@ public:
 template<typename T>  // , StackNode<T> END=StackNode<T>()
 class Stack: public Container<T> {
 public:
-	using Node = StackNode<T>;
-	using Iter = Iterator<T>;
-	using Cont = Container<T>;
+	typedef StackNode<T>  Node;
+	typedef Iterator<T>  Iter;  //< Interface of the Node
+	typedef Container<T>  Cont;
 	using Cont::add;
 	using Cont::find;
 	using Cont::operator[];
@@ -139,10 +152,14 @@ public:
 
 	Stack()
 		: _root(end()), _length(0)  {}
+#if __cplusplus >= 201103L
 	Stack(Stack&&)=default;
+#endif // __cplusplus 11+
 	Stack(const Stack&)=default;
 
+#if __cplusplus >= 201103L
 	Stack& operator=(Stack&&)=default;
+#endif // __cplusplus 11+
 	Stack& operator=(const Stack&)=default;
 	~Stack();
 

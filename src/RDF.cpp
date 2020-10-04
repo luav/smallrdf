@@ -11,12 +11,12 @@ using namespace smallrdf;
 
 
 String::String(const char* cstr, bool copy)
-	: _data(reinterpret_cast<decltype(_data)>(const_cast<char*>(cstr))),
+	: _data(reinterpret_cast<data_t*>(const_cast<char*>(cstr))),
 	  _size(_data ? strlen(cstr) + 1 : 0),
 	  _allocated(false)
 {
 	if (copy) {
-		_data = static_cast<decltype(_data)>(malloc(_size));
+		_data = static_cast<data_t*>(malloc(_size));
 		if(_data) {
 			_allocated = true;
 			memcpy(_data, cstr, _size);
@@ -25,7 +25,7 @@ String::String(const char* cstr, bool copy)
 }
 
 String::String(size_t size)
-	: _data(size ? static_cast<decltype(_data)>(malloc(size)) : nullptr),
+	: _data(size ? static_cast<data_t*>(malloc(size)) : nullptr),
 	  _size(_data ? size : 0),
 	  _allocated(_data)
 {
@@ -36,7 +36,7 @@ String::String(size_t size)
 }
 
 String::String(const uint8_t* buf, size_t size)
-	: _data(const_cast<decltype(_data)>(buf)),
+	: _data(const_cast<data_t*>(buf)),
 	  _size(size),
 	  _allocated(false)
 {
@@ -44,7 +44,7 @@ String::String(const uint8_t* buf, size_t size)
 	if (_data && _size && _data[_size-1] != 0) {
 		//char** writable_data = const_cast<char**>(&this->_data);
 		//writable_data = new char[_size]{0};
-		_data = static_cast<decltype(_data)>(malloc(++_size));
+		_data = static_cast<data_t*>(malloc(++_size));
 		if(_data) {
 			_allocated = true;
 			_data[_size-1] = 0;
@@ -69,6 +69,7 @@ String::String(String& other)
 	other._allocated = false;
 }
 
+#if __cplusplus >= 201103L
 String& String::operator=(String&& other)
 {
 	if(_allocated)
@@ -79,6 +80,7 @@ String& String::operator=(String&& other)
 	other._allocated = false;
 	return *this;
 }
+#endif // __cplusplus 11+
 
 String& String::operator=(const String& other)
 {
@@ -105,15 +107,15 @@ void String::clear()
 
 void String::swap(String& other)
 {
-	auto data = _data;
+	data_t* data = _data;
 	_data = other._data;
 	other._data = data;
 
-	auto size = _size;
+	size_t size = _size;
 	_size = other._size;
 	other._size = size;
 
-	auto allocated = _allocated;
+	bool allocated = _allocated;
 	_allocated = other._allocated;
 	other._allocated = allocated;
 }
@@ -127,7 +129,7 @@ bool String::resize(size_t length)
 			memcpy(ndt, _data, length < _size ? length : _size);
 	} else ndt = realloc(_data, length + 1);
 	if(ndt) {
-		_data = static_cast<decltype(_data)>(ndt);
+		_data = static_cast<data_t*>(ndt);
 		_data[length] = 0;
 		_size = length + 1;
 		_allocated = true;
@@ -235,7 +237,7 @@ bool Quad::match(const Term* subj, const Term* pred, const Term* obj, const Term
 
 Quad* Dataset::find(const Quad& quad)
 {
-	for(auto pit = quads.begin(); pit != quads.end(); pit = pit->next())
+	for(Quads::Iter* pit = quads.begin(); pit != quads.end(); pit = pit->next())
 		if ((**pit).match(quad.subject, quad.predicate, quad.object, quad.graph))
 			return &**pit;
 	return nullptr;
@@ -245,7 +247,7 @@ Dataset::Quads Dataset::match(const Term* subject, const Term* predicate,
                         const Term* object, const Term* graph)
 {
 	Quads matches;
-	for(auto pit = quads.begin(); pit != quads.end(); pit = pit->next())
+	for(Quads::Iter* pit = quads.begin(); pit != quads.end(); pit = pit->next())
 		if((**pit).match(subject, predicate, object, graph))
 			matches.add(**pit);
 
@@ -305,7 +307,7 @@ const Quad* Document::quad(const Term& subject,
 
 const String* Document::findString(const String& newStr) const
 {
-	for(auto pit = _strings.begin(); pit != _strings.end(); pit = pit->next())
+	for(const Strings::Iter* pit = _strings.begin(); pit != _strings.end(); pit = pit->next())
 		if (**pit == newStr)
 			return &**pit;
 
@@ -314,7 +316,7 @@ const String* Document::findString(const String& newStr) const
 
 const Term* Document::findTerm(const Term& newTerm) const
 {
-	for(auto pit = _terms.begin(); pit != _terms.end(); pit = pit->next())
+	for(const Terms::Iter* pit = _terms.begin(); pit != _terms.end(); pit = pit->next())
 		if (**pit == newTerm)
 			return &**pit;
 

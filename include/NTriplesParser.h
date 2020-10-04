@@ -11,10 +11,6 @@
 namespace smallrdf {
 
 class NTriplesParser {
-	Document* _doc;
-	const uint8_t* _buf;
-	const uint8_t* _cur;
-	const uint8_t* _end;
 public:
 	//! \brief Parse input, extending provided RDF document
 	//!
@@ -25,11 +21,13 @@ public:
 	static Document& parse(const String& input, Document*& doc);
 
 	NTriplesParser();
+#if __cplusplus >= 201103L
+	NTriplesParser(NTriplesParser&& other);
+#endif // __cplusplus 11+
     //! \brief Construct, initializing the internal RDF document
     //!
     //! \param doc Document*&  - original RDF document to be extended;
     //! 	invalidated after the call
-	NTriplesParser(NTriplesParser&& other);
 	NTriplesParser(Document*& doc);
 
 	~NTriplesParser();
@@ -40,9 +38,11 @@ public:
 	Document* release();
 	Document& parse(const String& input);
 protected:
+	typedef const uint8_t  data_t;  //!< Data type
+
 	const Quad* parseQuad();
 	bool hasNext() const;
-	uint8_t getNext();
+	data_t getNext();
 	bool readWhiteSpace();
 	const Term* readSubject();
 	const Term* readPredicate();
@@ -56,6 +56,11 @@ protected:
 	const String* readStringLiteralQuote();
 	bool isBlankNodeLabel() const;
 	const String* readBlankNodeLabel();
+private:
+	Document* _doc;
+	data_t* _buf;
+	data_t* _cur;
+	data_t* _end;
 };
 
 }  // smallrdf

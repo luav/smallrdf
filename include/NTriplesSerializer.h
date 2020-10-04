@@ -24,11 +24,13 @@ public:
 	static String& serialize(const Dataset& dataset, String*& storage);
 
 	NTriplesSerializer();
+#if __cplusplus >= 201103L
+    NTriplesSerializer(NTriplesSerializer&& other);
+#endif // __cplusplus 11+
     //! \brief Construct, initializing the internal storage
     //!
     //! \param storage String&  - storage, being extended on serialization;
     //! 	invalidated after the call
-    NTriplesSerializer(NTriplesSerializer&& other);
 	NTriplesSerializer(String*& storage);
 	~NTriplesSerializer();
 
