@@ -8,6 +8,21 @@
 #include <stdint.h>
 #include <assert.h>
 
+#if __cplusplus >= 201103L
+#include <type_traits>
+
+namespace smallrdf {
+#if __cplusplus < 201402L
+	using std::enable_if;
+	template<bool B, typename T=void>
+	using enable_if_t = typename enable_if<B,T>::type;
+#else
+	using std::enable_if_t;
+#endif // __cplusplus < 14+
+}  // smallrdf
+#endif // __cplusplus 11+
+
+
 namespace smallrdf {
 
 #if __cplusplus < 201103L && !defined(nullptr)
@@ -103,12 +118,16 @@ public:
 	StackNode(const T& val, StackNode* next=nullptr)
 		: _val(val), _next(next)  {}
 #if __cplusplus >= 201103L
+	// __cpp_rvalue_references, __cpp_ref_qualifiers
 	StackNode(StackNode&&)=default;
+	template<typename V=void, enable_if_t<std::is_trivially_copy_constructible<T>::value,V>* =nullptr>
 #endif // __cplusplus 11+
-	StackNode(const StackNode&)=default;
-//	StackNode(StackNode& other)
-//		// Note: T(other._val)) for T=String acquires the ownership
-//		: _val(T(other._val)), _next(other._next)  {}
+	StackNode(const StackNode& other)
+		: _val(other._val), _next(other._next)  {}
+	//StackNode(const StackNode& other)=default;
+	StackNode(StackNode& other)
+		// Note: T(other._val)) for T=String acquires the ownership
+		: _val(T(other._val)), _next(other._next)  {}
 
 #if __cplusplus >= 201103L
 	StackNode& operator=(StackNode&&)=default;

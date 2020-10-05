@@ -62,7 +62,7 @@ public:
     //! \param other String&&  - original string being acquired
 	String(String&& other)=default;
 #endif // __cplusplus 11+
-    //! \brief Acquire ownership of data if other's content, making other a view
+    //! \brief Acquire ownership of data of the other's content, making the latter a view
     //!
     //! \param other const String&  - original string, which could hold an ownership and becomes a view
 	String(String& other);

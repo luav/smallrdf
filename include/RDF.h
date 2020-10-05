@@ -65,14 +65,6 @@ typedef struct {
 
 #else // __cplusplus
 
-#if __cplusplus < 201103L && !defined(nullptr)
-	#ifdef NULL
-		#define nullptr  NULL
-	#else
-		#define nullptr  __null
-	#endif // NULL
-#endif // < __cplusplus 11+
-
 // Omit restrict C keyword
 #define restrict
 

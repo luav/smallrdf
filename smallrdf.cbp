@@ -21,7 +21,6 @@
 					<Add option="-Wswitch-default" />
 					<Add option="-Wmain" />
 					<Add option="-Wall" />
-					<Add option="-std=c++17" />
 					<Add option="-fPIC" />
 					<Add option="-Og" />
 					<Add option="-g" />
@@ -44,7 +43,6 @@
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
 					<Add option="-O3" />
-					<Add option="-std=c++17" />
 					<Add option="-fPIC" />
 					<Add option="-shared" />
 					<Add option="-pipe" />
@@ -65,7 +63,6 @@
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
 					<Add option="-O3" />
-					<Add option="-std=c++17" />
 					<Add option="-shared" />
 					<Add option="-pipe" />
 					<Add option="-fpic" />
@@ -117,7 +114,6 @@
 					<Add option="-Wswitch-default" />
 					<Add option="-Wmain" />
 					<Add option="-Wall" />
-					<Add option="-std=c++17" />
 					<Add option="-Og" />
 					<Add option="-g" />
 					<Add option="-fasynchronous-unwind-tables" />
@@ -141,6 +137,7 @@
 			<Add option="-Wfloat-equal" />
 			<Add option="-Wunreachable-code" />
 			<Add option="-Weffc++" />
+			<Add option="-std=c++17" />
 			<Add option="-Wmissing-include-dirs" />
 			<Add option="-Wzero-as-null-pointer-constant" />
 			<Add option="-fno-exceptions" />
